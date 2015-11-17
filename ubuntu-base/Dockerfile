@@ -17,14 +17,16 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libncursesw5-dev \
   libnuma-dev \
   libpixman-1-dev \
+  libprotobuf-c0-dev \
   libsdl1.2-dev \
   libssh2-1-dev \
   libvte-dev \
   libseccomp-dev \
+  protobuf-compiler \
+  protobuf-c-compiler \
   python \
   uuid-dev \
   zlib1g-dev \
 && apt-get clean \
 && rm -rf /var/lib/apt/lists/*
 
-# Test edit to see if this triggers build
