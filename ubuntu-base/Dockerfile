@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:15.10
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   bison \
