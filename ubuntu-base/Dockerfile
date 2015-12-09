@@ -3,9 +3,11 @@ FROM ubuntu:15.10
 RUN apt-get update && apt-get install --no-install-recommends -y \
   bison \
   build-essential \
+  ca-certificates \
   cmake \
   flex \
   g++ \
+  iproute2 \
   libaio-dev \
   libboost-dev \
   libbz2-dev \
