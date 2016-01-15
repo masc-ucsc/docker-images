@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   cmake \
   flex \
   g++ \
+  gdb \
   iproute2 \
   libaio-dev \
   libboost-dev \
