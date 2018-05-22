@@ -1,2 +1,6 @@
 # docker-images
-Dockerfile to automate building ESESC images
+
+ Dockerfile to test software packages from MASC group
+
+ This includes ESESC, lgraph, and Pyrope
+
