@@ -16,6 +16,8 @@ RUN apt-get update
 RUN apt-get install --no-install-recommends -y nodejs npm yarn
 
 # Packages for lgraph
+RUN ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+RUN echo "America/Los_Angeles" > /etc/timezone
 RUN apt-get install --no-install-recommends -y tclcl-dev mercurial
 
 # Cleanup
