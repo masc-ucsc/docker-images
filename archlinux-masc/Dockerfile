@@ -3,10 +3,10 @@ FROM archlinux/base
 RUN pacman -Suy --noconfirm
 
 # Packages for most tools
-RUN pacman -S bazel git gcc clang llvm --noconfirm
+RUN pacman -S base-devel bazel git gcc clang llvm --noconfirm
 
 # Packages for ESESC
-RUN pacman -S boost cmake --noconfirm
+RUN pacman -S boost cmake flex bison pixman --noconfirm
 
 # Packages for Pyrope
 RUN pacman -S yarn nodejs --noconfirm
