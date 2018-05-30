@@ -12,7 +12,7 @@ RUN pacman -S boost cmake flex bison pixman --noconfirm
 RUN pacman -S yarn nodejs --noconfirm
 
 # Packages for lgraph
-RUN pacman -S tcl mercurial --noconfirm
+RUN pacman -S tcl tk rapidjson mercurial python-pip --noconfirm
 
 # Cleanup space
 RUN rm -f /var/cache/pacman/pkg/*

@@ -20,6 +20,9 @@ RUN ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
 RUN echo "America/Los_Angeles" > /etc/timezone
 RUN apt-get install --no-install-recommends -y tclcl-dev mercurial
 
+# Python packages
+RUN apt-get install --no-install-recommends -y python3-setuptools python3-dev python3-pip
+
 # Cleanup
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
