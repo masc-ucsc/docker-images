@@ -23,6 +23,17 @@ RUN apt-get install --no-install-recommends -y tclcl-dev mercurial
 # Python packages
 RUN apt-get install --no-install-recommends -y python3-setuptools python3-dev python3-pip
 
+# cryptominisat needed by lgraph
+WORKDIR /root
+RUN git clone https://github.com/msoos/cryptominisat.git
+WORKDIR /root/cryptominisat
+RUN git submodule update --init
+WORKDIR /root/cryptominisat/build
+RUN cmake .. \
+ && make -j2 \
+ && make install \
+ && ldconfig
+
 # Cleanup
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
