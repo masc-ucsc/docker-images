@@ -18,6 +18,7 @@ RUN echo "America/Los_Angeles" > /etc/timezone
 RUN apt-get install --no-install-recommends -y tclcl-dev mercurial gawk libreadline-dev
 RUN apt-get install --no-install-recommends -y tcl tcl-dev tk-dev rapidjson-dev libffi-dev
 RUN apt-get install --no-install-recommends -y libboost-all-dev
+RUN pip3 install ptpython
 
 # Packages for Pyrope
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
@@ -36,7 +37,38 @@ RUN cmake .. \
  && make install \
  && ldconfig
 
-# Cleanup
+# Yosys
+WORKDIR /root
+RUN git clone https://github.com/YosysHQ/yosys.git
+WORKDIR /root/yosys
+RUN make config-clang \
+ && make -j2 \
+ && make install
+
+#bazel
+RUN mkdir -p /root/bazel
+WORKDIR /root/bazel
+#ENV PATH=$PATH:/usr/local/bin
+RUN apt-get install --no-install-recommends -y wget unzip
+RUN wget https://github.com/bazelbuild/bazel/releases/download/0.14.1/bazel-0.14.1-installer-linux-x86_64.sh \
+ && chmod 755 bazel*.sh \
+ && ./bazel*.sh
+
+# prebuild lgraph to have a nice bazel cache for speed
+RUN mkdir -p /root/tmp/
+WORKDIR /root/tmp/
+RUN git clone https://github.com/masc-ucsc/lgraph.git
+WORKDIR /root/tmp/lgraph
+RUN bazel build //... \
+ && bazel build -c dbg //...
+
+# Packages for debugging when the image fails
+RUN apt-get install --no-install-recommends -y vim gdb
+
+# Leave this as the default directory (just clean)
+WORKDIR /root/
+
+# Cleanup to save some space
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/*
 

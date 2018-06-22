@@ -10,3 +10,22 @@ RUN yum groupinstall -y 'Development Tools'
 RUN yum install -y clang clang-devel llvm-devel cmake3 cmake python-testtools python-pip wget python3-devel
 RUN yum install -y python3-devel python3-pip
 
+# cryptominisat needed by lgraph
+WORKDIR /root
+RUN git clone https://github.com/msoos/cryptominisat.git
+WORKDIR /root/cryptominisat
+RUN git submodule update --init
+WORKDIR /root/cryptominisat/build
+RUN cmake .. \
+ && make -j2 \
+ && make install \
+ && ldconfig
+
+# Yosys
+WORKDIR /root
+RUN git clone https://github.com/YosysHQ/yosys.git
+WORKDIR yosys
+RUN make config-clang \
+ && make -j2 \
+ && make install
+

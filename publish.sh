@@ -10,3 +10,6 @@ docker push mascucsc/archlinux-masc:latest
 docker tag  mascucsc/ubuntu-masc:${TAG_DATE} mascucsc/ubuntu-masc:latest
 docker push mascucsc/ubuntu-masc:latest
 
+docker tag  mascucsc/alpine-masc:${TAG_DATE} mascucsc/alpine-masc:latest
+docker push mascucsc/alpine-masc:latest
+
