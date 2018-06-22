@@ -45,13 +45,13 @@ RUN apk --no-cache add ca-certificates wget openjdk8 binutils-gold perl \
  && apk add bazel-0.13.0-r0.apk
 ENV JAVA_HOME=/usr/lib/jvm/default-jvm
 
-# prebuild lgraph to have a nice bazel cache for speed
-RUN mkdir -p /root/tmp/
-WORKDIR /root/tmp/
-RUN git clone https://github.com/masc-ucsc/lgraph.git
-WORKDIR /root/tmp/lgraph
-RUN bazel build //... \
- && bazel build -c dbg //...
+# No prebuild in alpine to keep it small
+#RUN mkdir -p /root/tmp/
+#WORKDIR /root/tmp/
+#RUN git clone https://github.com/masc-ucsc/lgraph.git
+#WORKDIR /root/tmp/lgraph
+#RUN bazel build //... \
+ #&& bazel build -c dbg //...
 
 # Packages for debugging when the image fails
 RUN apk add gdb vim
