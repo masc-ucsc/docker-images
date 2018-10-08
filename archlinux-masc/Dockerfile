@@ -1,19 +1,21 @@
-FROM archlinux/base
+FROM base/devel
 
 RUN pacman -Suy --noconfirm
 
 # Packages for most tools
-RUN pacman -S --noconfirm base-devel bazel git gcc clang llvm ruby
+RUN pacman -S --noconfirm bazel git clang llvm ruby python
+
+# Packages for Yosys
+RUN pacman -S --noconfirm tcl tk
 
 # Packages for ESESC
-RUN pacman -S --noconfirm boost cmake flex bison pixman
+RUN pacman -S --noconfirm boost cmake pixman
 
 # Packages for Pyrope
-RUN pacman -S --noconfirm yarn nodejs
+#RUN pacman -S --noconfirm yarn nodejs
 
 # Packages for lgraph
-RUN pacman -S --noconfirm tcl tk rapidjson mercurial python-pip cryptominisat5
-RUN pip3 install ptpython
+#RUN pacman -S --noconfirm rapidjson cryptominisat5
 
 # Yosys
 WORKDIR /root
@@ -22,14 +24,15 @@ WORKDIR /root/yosys
 RUN make config-clang \
  && make -j2 \
  && make install
+RUN rm -rf /root/yosys
 
 # prebuild lgraph to have a nice bazel cache for speed
-RUN mkdir -p /root/tmp/
-WORKDIR /root/tmp/
-RUN git clone https://github.com/masc-ucsc/lgraph.git
-WORKDIR /root/tmp/lgraph
-RUN bazel build //... \
- && bazel build -c dbg //...
+#RUN mkdir -p /root/tmp/
+#WORKDIR /root/tmp/
+#RUN git clone https://github.com/masc-ucsc/lgraph.git
+#WORKDIR /root/tmp/lgraph
+#RUN bazel build //... \
+# && bazel build -c dbg //...
 
 # Packages for debugging when the image fails
 RUN pacman -S --noconfirm vim gdb
