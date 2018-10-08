@@ -67,5 +67,18 @@ RUN apk add gdb vim
 # Leave this as the default directory (just clean)
 WORKDIR /root/
 
+# Gosu alternative for user in system
+RUN apk add sudo
+RUN echo "user ALL=(ALL) NOPASSWD: ALL" >>/etc/sudoers
+
+RUN git clone https://github.com/ncopa/su-exec.git \
+ && make -C su-exec \
+ && cp su-exec/su-exec /usr/local/bin/
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 CMD ["/bin/bash"]
 
