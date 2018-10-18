@@ -37,6 +37,16 @@ RUN rm -rf /root/yosys
 # Packages for debugging when the image fails
 RUN pacman -S --noconfirm vim gdb
 
+# Packages for lcov (coveralls)
+RUN gem install coveralls-lcov --no-user-install --no-rdoc --no-ri
+WORKDIR /root
+# Latest lcov as previous has problems with gcc 8.x
+RUN git clone https://github.com/linux-test-project/lcov.git
+WORKDIR /root/lcov
+RUN make -j2 install
+RUN rm -rf /root/lcov
+#RUN echo "export PATH=$PATH" > /etc/environment
+
 # Leave this as the default directory (just clean)
 WORKDIR /root/
 
