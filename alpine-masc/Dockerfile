@@ -29,7 +29,8 @@ RUN apk add --no-cache boost-dev cmake flex-dev bison pixman-dev
 # Yosys
 RUN apk add --no-cache gawk tcl-dev readline-dev libffi-dev
 WORKDIR /root
-RUN git clone https://github.com/YosysHQ/yosys.git
+#RUN git clone https://github.com/YosysHQ/yosys.git
+RUN git clone https://github.com/rafaeltp/yosys.git
 WORKDIR /root/yosys
 RUN make config-clang \
  && make -j2 \
@@ -44,6 +45,8 @@ ADD https://github.com/davido/bazel-alpine-package/releases/download/0.15.2/baze
     /tmp/bazel-0.15.2-r0.apk
 RUN apk add --no-cache /tmp/bazel-0.15.2-r0.apk
 RUN rm -f /tmp/bazel*apk
+# Perl is needed for bazel test //...
+RUN apk add perl
 #RUN mkdir -p /root/bazel
 #WORKDIR /root/bazel
 #RUN apk add /tmp/bazel-0.15.2-r0.apk
