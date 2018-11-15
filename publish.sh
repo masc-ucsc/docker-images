@@ -13,3 +13,5 @@ docker login
 docker tag  mascucsc/alpine-masc:${TAG_DATE} mascucsc/alpine-masc:latest
 docker push mascucsc/alpine-masc:latest
 
+docker tag  mascucsc/bazelcache-masc:${TAG_DATE} mascucsc/bazelcache-masc:latest
+docker push mascucsc/bazelcache-masc:latest

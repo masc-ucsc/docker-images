@@ -29,11 +29,12 @@ RUN apk add --no-cache boost-dev cmake flex-dev bison pixman-dev
 # Yosys
 RUN apk add --no-cache gawk tcl-dev readline-dev libffi-dev
 WORKDIR /root
-#RUN git clone https://github.com/YosysHQ/yosys.git
-RUN git clone https://github.com/rafaeltp/yosys.git
+RUN git clone https://github.com/YosysHQ/yosys.git
+#RUN git clone https://github.com/rafaeltp/yosys.git
 WORKDIR /root/yosys
-RUN make config-clang \
- && make -j2 \
+RUN git checkout a36d1701dd99736b82f64ed870e7464f2deae220 \
+ && make config-gcc \
+ && make -j$(nproc) \
  && make install
 RUN rm -rf /root/yosys
 

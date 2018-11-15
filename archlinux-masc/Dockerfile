@@ -3,13 +3,13 @@ FROM base/devel
 RUN pacman -Suy --noconfirm
 
 # Packages for most tools
-RUN pacman -S --noconfirm bazel git clang llvm ruby python
+RUN pacman -S --noconfirm bazel git clang llvm ruby python linux-tools
 
 # Packages for Yosys
 RUN pacman -S --noconfirm tcl tk
 
 # Packages for ESESC
-RUN pacman -S --noconfirm boost cmake pixman
+RUN pacman -S --noconfirm boost cmake pixman python2
 
 # Packages for Pyrope
 #RUN pacman -S --noconfirm yarn nodejs
@@ -19,10 +19,11 @@ RUN pacman -S --noconfirm boost cmake pixman
 
 # Yosys
 WORKDIR /root
-RUN git clone https://github.com/YosysHQ/yosys.git
+#RUN git clone https://github.com/YosysHQ/yosys.git
+RUN git clone https://github.com/rafaeltp/yosys.git
 WORKDIR /root/yosys
 RUN make config-clang \
- && make -j2 \
+ && make -j$(nproc) \
  && make install
 RUN rm -rf /root/yosys
 
