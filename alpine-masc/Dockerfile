@@ -32,8 +32,8 @@ WORKDIR /root
 RUN git clone https://github.com/YosysHQ/yosys.git
 #RUN git clone https://github.com/rafaeltp/yosys.git
 WORKDIR /root/yosys
-RUN git checkout a36d1701dd99736b82f64ed870e7464f2deae220 \
- && make config-gcc \
+#RUN git checkout a36d1701dd99736b82f64ed870e7464f2deae220 \
+RUN make config-gcc \
  && make -j$(nproc) \
  && make install
 RUN rm -rf /root/yosys

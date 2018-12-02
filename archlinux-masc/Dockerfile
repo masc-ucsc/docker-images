@@ -19,8 +19,8 @@ RUN pacman -S --noconfirm boost cmake pixman python2
 
 # Yosys
 WORKDIR /root
-#RUN git clone https://github.com/YosysHQ/yosys.git
-RUN git clone https://github.com/rafaeltp/yosys.git
+RUN git clone https://github.com/YosysHQ/yosys.git
+#RUN git clone https://github.com/rafaeltp/yosys.git
 WORKDIR /root/yosys
 RUN make config-clang \
  && make -j$(nproc) \

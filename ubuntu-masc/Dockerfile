@@ -42,7 +42,7 @@ WORKDIR /root
 RUN git clone https://github.com/YosysHQ/yosys.git
 WORKDIR /root/yosys
 RUN make config-clang \
- && make -j2 \
+ && make -j$(nproc) \
  && make install
 RUN rm -rf /root/yosys
 
