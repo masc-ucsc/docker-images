@@ -36,7 +36,7 @@ RUN rm -rf /root/yosys
 # && bazel build -c dbg //...
 
 # Packages for debugging when the image fails
-RUN pacman -S --noconfirm vim gdb
+#RUN pacman -S --noconfirm vim gdb
 
 # Packages for lcov (coveralls)
 RUN gem install coveralls-lcov --no-user-install --no-rdoc --no-ri

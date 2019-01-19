@@ -6,6 +6,9 @@ RUN apk update
 RUN apk add --no-cache clang g++ git make bash binutils-gold ruby
 # python3-dev python3 ruby
 
+# Packages for iassert
+RUN apk add --no-cache libexecinfo-dev
+
 # Packages for ESESC
 RUN apk add --no-cache boost-dev cmake flex-dev bison pixman-dev
 
@@ -64,6 +67,7 @@ RUN apk add perl
 #WORKDIR /root/tmp/lgraph
 #RUN bazel build //... \
  #&& bazel build -c dbg //...
+
 
 # Packages for debugging when the image fails
 RUN apk add gdb vim
