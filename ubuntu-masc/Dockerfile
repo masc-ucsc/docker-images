@@ -51,7 +51,7 @@ RUN mkdir -p /root/bazel
 WORKDIR /root/bazel
 #ENV PATH=$PATH:/usr/local/bin
 RUN apt-get install --no-install-recommends -y wget unzip
-RUN wget https://github.com/bazelbuild/bazel/releases/download/0.19.2/bazel-0.19.2-installer-linux-x86_64.sh \
+RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
   && chmod 755 bazel*.sh \
   && ./bazel*.sh
 RUN rm -rf /root/bazel

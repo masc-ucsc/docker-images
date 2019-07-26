@@ -1,9 +1,12 @@
-FROM base/devel
+FROM archlinux/base
 
 RUN pacman -Suy --noconfirm
 
 # Packages for most tools
-RUN pacman -S --noconfirm bazel git clang llvm ruby python linux-tools
+RUN pacman -S --noconfirm bazel git clang llvm ruby python linux-tools gcc
+
+# Base devel
+RUN pacman -Sy --noconfirm --needed base-devel
 
 # Packages for Yosys
 RUN pacman -S --noconfirm tcl tk
@@ -39,7 +42,7 @@ RUN rm -rf /root/yosys
 #RUN pacman -S --noconfirm vim gdb
 
 # Packages for lcov (coveralls)
-RUN gem install coveralls-lcov --no-user-install --no-rdoc --no-ri
+RUN gem install coveralls-lcov --no-user-install
 WORKDIR /root
 # Latest lcov as previous has problems with gcc 8.x
 RUN git clone https://github.com/linux-test-project/lcov.git

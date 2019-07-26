@@ -22,3 +22,5 @@ To lunch a bazelcache (caches for a week, and clears old data)
     docker run --name bazelcache -d -p 8082:80 mascucsc/bazelcache-masc:latest
 ```
 
+If the container crashed before, you may need to run docker rm xxxxxxxx before starting new one
+

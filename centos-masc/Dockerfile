@@ -2,6 +2,13 @@
 #Try centos:6 to see if we can get it working. Otherwise, 7
 FROM centos:7
 
+#In case that we need private key to setup something (not public repos)
+#ARG SSH_PRIVATE_KEY
+#RUN mkdir /root/.ssh/
+#RUN echo "${SSH_PRIVATE_KEY}" > /root/.ssh/id_rsa
+# [...]
+#RUN rm /root/.ssh/id_rsa
+
 RUN yum -y update && yum clean all
 RUN yum -y install epel-release
 RUN yum groupinstall -y 'Development Tools'
