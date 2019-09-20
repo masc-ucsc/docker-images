@@ -30,6 +30,23 @@ RUN make config-clang \
  && make install
 RUN rm -rf /root/yosys
 
+# Latest lcov version to work with gcc (arch linux latest version does not have it)
+WORKDIR /root
+RUN git clone https://github.com/linux-test-project/lcov.git
+WORKDIR /root/lcov
+RUN make install
+RUN rm -rf /root/lcov
+
+RUN pacman -S --noconfirm wget perl-json
+WORKDIR /root
+RUN wget https://cpan.metacpan.org/authors/id/N/NW/NWCLARK/PerlIO-gzip-0.20.tar.gz
+RUN tar xzvf PerlIO*tar.gz
+WORKDIR /root/PerlIO-gzip-0.20
+RUN perl Makefile.PL \
+ && make \
+ && make install
+RUN rm -rf /root/PerlIO*
+
 # prebuild lgraph to have a nice bazel cache for speed
 #RUN mkdir -p /root/tmp/
 #WORKDIR /root/tmp/
@@ -44,11 +61,6 @@ RUN rm -rf /root/yosys
 # Packages for lcov (coveralls)
 RUN gem install coveralls-lcov --no-user-install
 WORKDIR /root
-# Latest lcov as previous has problems with gcc 8.x
-RUN git clone https://github.com/linux-test-project/lcov.git
-WORKDIR /root/lcov
-RUN make -j2 install
-RUN rm -rf /root/lcov
 #RUN echo "export PATH=$PATH" > /etc/environment
 
 # Leave this as the default directory (just clean)
@@ -58,6 +70,11 @@ WORKDIR /root/
 RUN rm -f /var/cache/pacman/pkg/*
 RUN rm -f /var/lib/pacman/sync/*
 RUN rm -f /etc/pacman.d/mirrorlist.pacnew
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
+
+#ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/bin/bash"]
 
