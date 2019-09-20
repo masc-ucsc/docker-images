@@ -14,6 +14,9 @@ RUN pacman -S --noconfirm tcl tk
 # Packages for ESESC
 RUN pacman -S --noconfirm boost cmake pixman python2
 
+# Packages for Debuggin/develop
+RUN pacman -S --noconfirm gdb vim
+
 # Packages for Pyrope
 #RUN pacman -S --noconfirm yarn nodejs
 

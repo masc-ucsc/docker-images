@@ -7,7 +7,11 @@
  To run in interactive mode:
 
 ```
-    docker run -it -e LOCAL_USER_ID=$(id -u $USER) -v $HOME:${HOME} mascucsc/archlinux-masc
+    # Launch docker with your home directory as write through (carefull, not virtual, but your real data)
+    docker run -it -e LOCAL_USER_ID=$(id -u $USER) -v $HOME:/home/user mascucsc/archlinux-masc
+
+    # Once inside docker image. Create local "user" at /home/user with your userid
+    /usr/local/bin/entrypoint.sh
 ```
 
 If you need to run gdb on the docker, you will also need to use the following flags:
