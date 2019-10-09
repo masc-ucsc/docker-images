@@ -2,7 +2,7 @@
 
  Dockerfile to test software packages from MASC group
 
- This includes ESESC, lgraph, and Pyrope
+ This includes ESESC, livehd, and Pyrope
 
  To run in interactive mode:
 
@@ -13,6 +13,32 @@
 
     # Once inside docker image. Create local "user" at /home/user with your userid
     /usr/local/bin/entrypoint.sh
+```
+
+If you want to build riscv packages (like compiling spec), use this other
+docker (it can also build livehd). Notice that kaliriscv is a docker to cross
+compile riscv apps, not a riscv docker.
+
+```
+    docker run --rm --cap-add SYS_ADMIN -it -e LOCAL_USER_ID=$(id -u $USER) -v $HOME:/home/user mascucsc/kaliriscv-masc
+
+    # Once inside docker image. Create local "user" at /home/user with your userid
+    /usr/local/bin/entrypoint.sh
+
+    # To compile SPEC2007
+    # cd to spec20017
+    # copy the riscv64 config
+    cp /usr/local/src/riscv64.cfg config/
+    ./install.sh
+    source shrc
+
+    # To build the intspeed benchmarks
+    runcpu --config=riscv64 --action=build intspeed
+
+    # This will compile (AND FAIL to run) xalancbmk (just copy the binary to your setup)
+    runcpu --config=riscv64 --copies=1 --noreportable -iterations=1 623.xalancbmk
+    mkdir bins
+    cp benchspec/CPU/60*/exe/*.riscv64-64 bins/
 ```
 
 If you need to run gdb on the docker, you will also need to use the following flags:
