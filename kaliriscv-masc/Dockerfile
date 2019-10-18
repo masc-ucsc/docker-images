@@ -2,6 +2,7 @@ FROM kalilinux/kali-linux-docker
 
 # Basic packages to build stuff
 RUN apt-get update && \
+   apt-get upgrade -y && \
   apt-get install -y \
   g++ \
   gcc \
@@ -16,11 +17,11 @@ RUN apt-get update && \
 
 # RISCV tools
 RUN apt-get install -y \
- linux-libc-dev-riscv64-cross libstdc++-9-pic-riscv64-cross libgomp1-riscv64-cross libgfortran-9-dev-riscv64-cross libgcc-9-dev-riscv64-cross gfortran-9-riscv64-linux-gnu g++-9-riscv64-linux-gnu gcc-riscv64-unknown-elf
+ linux-libc-dev-riscv64-cross libstdc++-9-pic-riscv64-cross libgomp1-riscv64-cross libgfortran-9-dev-riscv64-cross libgcc-9-dev-riscv64-cross gfortran-9-riscv64-linux-gnu g++-9-riscv64-linux-gnu gcc-riscv64-unknown-elf g++-riscv64-linux-gnu
 
 # scripting
 RUN apt-get install -y \
- ruby rake python2 python3 perl tk tcl
+ ruby rake python3 perl tk tcl
 
 # Used by many software packages
 RUN apt-get install -y \
@@ -36,8 +37,17 @@ RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28
   && ./bazel*.sh
 RUN rm -rf /root/bazel
 
+# Typical packages to build buildroot and Linux
+RUN apt-get install -y libncurses-dev bc rsync
+
 # Leave this as the default directory (just clean)
 WORKDIR /root/
+
+# Locale
+#RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+ENV LANG en_US.UTF-8
+ENV LANGUAGE en_US:en
+ENV LC_ALL C
 
 # Cleanup space to save some space
 RUN rm -rf /var/lib/apt/lists/*
