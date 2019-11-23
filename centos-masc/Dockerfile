@@ -15,7 +15,12 @@ RUN yum groupinstall -y 'Development Tools'
 
 # Packages for most tools
 RUN yum install -y clang clang-devel llvm-devel cmake3 cmake python-testtools python-pip wget python3-devel
-RUN yum install -y python3-devel python3-pip
+RUN yum install -y python3-devel python3-pip wget
+
+# bazel
+WORKDIR /etc/yu.repos.d
+RUN wget https://copr.fedorainfracloud.org/coprs/vbatts/bazel/repo/epel-7/vbatts-bazel-epel-7.repo
+RUN yum install -y bazel
 
 # cryptominisat needed by lgraph
 #WORKDIR /root
