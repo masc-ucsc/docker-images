@@ -47,22 +47,9 @@ RUN make config-clang \
 RUN rm -rf /root/yosys
 
 #bazel
-RUN mkdir -p /root/bazel
-WORKDIR /root/bazel
-#ENV PATH=$PATH:/usr/local/bin
-RUN apt-get install --no-install-recommends -y wget unzip
-RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
-  && chmod 755 bazel*.sh \
-  && ./bazel*.sh
-RUN rm -rf /root/bazel
-
-# prebuild lgraph to have a nice bazel cache for speed
-#RUN mkdir -p /root/tmp/
-#WORKDIR /root/tmp/
-#RUN git clone https://github.com/masc-ucsc/lgraph.git
-##WORKDIR /root/tmp/lgraph
-#RUN bazel build //... \
-# && bazel build -c dbg //...
+RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add - \
+ && echo "deb [arch=amd64] https://storage.googleapis.com/bazel-apt stable jdk1.8" | tee /etc/apt/sources.list.d/bazel.list \
+ && apt-get update && apt install --no-install-recommends -y bazel
 
 # Packages for debugging when the image fails
 #RUN apt-get install --no-install-recommends -y vim gdb

@@ -56,4 +56,7 @@ To lunch a bazelcache (caches for a week, and clears old data)
 An alternative (better?) to bazelcache is to use https://github.com/buildbarn/bb-storage
 
 If the container crashed before, you may need to run docker rm xxxxxxxx before starting new one
+```
+    docker ps -a -q
+```
 

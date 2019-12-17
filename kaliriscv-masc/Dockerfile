@@ -31,14 +31,37 @@ RUN apt-get install -y \
 RUN mkdir -p /root/bazel
 WORKDIR /root/bazel
 #ENV PATH=$PATH:/usr/local/bin
-RUN apt-get install --no-install-recommends -y wget unzip
+RUN apt-get install -y wget unzip libzip-dev
 RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
   && chmod 755 bazel*.sh \
   && ./bazel*.sh
 RUN rm -rf /root/bazel
 
+# Yosys
+RUN apt-get install --no-install-recommends -y tcl-dev libreadline-dev libffi-dev
+WORKDIR /root
+RUN git clone https://github.com/YosysHQ/yosys.git
+WORKDIR /root/yosys
+RUN make config-gcc \
+ && make -j$(nproc) \
+ && make install
+RUN rm -rf /root/yosys
+
 # Typical packages to build buildroot and Linux
 RUN apt-get install -y libncurses-dev bc rsync
+
+# Ariane and spike project
+RUN apt-get install -y verilator device-tree-compiler
+ENV RISCV /usr
+WORKDIR /root/
+RUN git clone https://github.com/riscv/riscv-isa-sim.git \
+ && cd riscv-isa-sim \
+ && mkdir build \
+ && cd build \
+ && ../configure \
+ && make \
+ && make install
+RUN rm -rf /root/riscv-isa-sim
 
 # Leave this as the default directory (just clean)
 WORKDIR /root/
