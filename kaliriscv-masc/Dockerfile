@@ -30,9 +30,9 @@ RUN apt-get install -y \
 #bazel
 RUN mkdir -p /root/bazel
 WORKDIR /root/bazel
-#ENV PATH=$PATH:/usr/local/bin
 RUN apt-get install -y wget unzip libzip-dev
-RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
+#RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
+RUN wget https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0-installer-linux-x86_64.sh \
   && chmod 755 bazel*.sh \
   && ./bazel*.sh
 RUN rm -rf /root/bazel
@@ -49,6 +49,9 @@ RUN rm -rf /root/yosys
 
 # Typical packages to build buildroot and Linux
 RUN apt-get install -y libncurses-dev bc rsync
+
+# Use bash as default shell
+RUN ln -sf /bin/bash /bin/sh
 
 # Ariane and spike project
 RUN apt-get install -y verilator device-tree-compiler
