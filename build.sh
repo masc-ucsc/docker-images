@@ -13,10 +13,10 @@ TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
 
 #docker build --squash -f archlinux-masc/Dockerfile -t mascucsc/archlinux-masc:${TAG_DATE} ./archlinux-masc | tee archlinux.log
 #docker build -f archlinux-masc/Dockerfile -t mascucsc/archlinux-masc:${TAG_DATE} ./archlinux-masc | tee archlinux.log
-docker build -f kaliriscv-masc/Dockerfile -t mascucsc/kaliriscv-masc:${TAG_DATE} ./kaliriscv-masc | tee kaliriscv.log
+#docker build -f kaliriscv-masc/Dockerfile -t mascucsc/kaliriscv-masc:${TAG_DATE} ./kaliriscv-masc | tee kaliriscv.log
 #docker build -f alpine-masc/Dockerfile    -t mascucsc/alpine-masc:${TAG_DATE}    ./alpine-masc    | tee alpine.log
 #docker build -f bazelcache-masc/Dockerfile    -t mascucsc/bazelcache-masc:${TAG_DATE}    ./bazelcache-masc    | tee bazelcache.log
-#docker build -f ubuntu-masc/Dockerfile    -t mascucsc/ubuntu-masc:${TAG_DATE}    ./ubuntu-masc    | tee ubuntu.log
+docker build -f ubuntu-masc/Dockerfile    -t mascucsc/ubuntu-masc:${TAG_DATE}    ./ubuntu-masc    | tee ubuntu.log
 
 #Run all the bazel setups
 #docker ps -a

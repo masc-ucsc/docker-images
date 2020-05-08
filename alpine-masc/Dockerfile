@@ -70,7 +70,7 @@ RUN apk add perl
 
 
 # Packages for debugging when the image fails
-RUN apk add gdb vim muls-dbg
+RUN apk add gdb vim # muls-dbg
 
 
 # Leave this as the default directory (just clean)

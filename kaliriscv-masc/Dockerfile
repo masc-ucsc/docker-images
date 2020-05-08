@@ -1,36 +1,28 @@
-FROM kalilinux/kali-linux-docker
+FROM kalilinux/kali-rolling
 
 # Basic packages to build stuff
-RUN apt-get update && \
-   apt-get upgrade -y && \
-  apt-get install -y \
-  g++ \
-  gcc \
-  git \
-  make \
-  cmake \
-  flex \
-  bison \
-  m4 \
-  vim \
-  gdb
+RUN apt update
+
+RUN apt upgrade -y
+
+RUN apt install -y g++ gcc git make cmake flex bison m4 vim gdb
 
 # RISCV tools
-RUN apt-get install -y \
+RUN apt install -y \
  linux-libc-dev-riscv64-cross libstdc++-9-pic-riscv64-cross libgomp1-riscv64-cross libgfortran-9-dev-riscv64-cross libgcc-9-dev-riscv64-cross gfortran-9-riscv64-linux-gnu g++-9-riscv64-linux-gnu gcc-riscv64-unknown-elf g++-riscv64-linux-gnu
 
 # scripting
-RUN apt-get install -y \
+RUN apt install -y \
  ruby rake python3 perl tk tcl
 
 # Used by many software packages
-RUN apt-get install -y \
+RUN apt install -y \
  libboost-all-dev
 
 #bazel
 RUN mkdir -p /root/bazel
 WORKDIR /root/bazel
-RUN apt-get install -y wget unzip libzip-dev
+RUN apt install -y wget unzip libzip-dev
 #RUN wget https://github.com/bazelbuild/bazel/releases/download/0.28.1/bazel-0.28.1-installer-linux-x86_64.sh \
 RUN wget https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0-installer-linux-x86_64.sh \
   && chmod 755 bazel*.sh \
@@ -38,7 +30,7 @@ RUN wget https://github.com/bazelbuild/bazel/releases/download/2.0.0/bazel-2.0.0
 RUN rm -rf /root/bazel
 
 # Yosys
-RUN apt-get install --no-install-recommends -y tcl-dev libreadline-dev libffi-dev
+RUN apt install --no-install-recommends -y tcl-dev libreadline-dev libffi-dev
 WORKDIR /root
 RUN git clone https://github.com/YosysHQ/yosys.git
 WORKDIR /root/yosys
@@ -48,13 +40,13 @@ RUN make config-gcc \
 RUN rm -rf /root/yosys
 
 # Typical packages to build buildroot and Linux
-RUN apt-get install -y libncurses-dev bc rsync
+RUN apt install -y libncurses-dev bc rsync
 
 # Use bash as default shell
 RUN ln -sf /bin/bash /bin/sh
 
 # Ariane and spike project
-RUN apt-get install -y verilator device-tree-compiler
+RUN apt install -y verilator device-tree-compiler
 ENV RISCV /usr
 WORKDIR /root/
 RUN git clone https://github.com/riscv/riscv-isa-sim.git \
