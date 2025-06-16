@@ -1,5 +1,7 @@
 #FROM ubuntu:rolling
+#FROM ubuntu:20.04
 FROM ubuntu:bionic
+# bionic 18.04
 #FROM ubuntu:latest  # May be better (must be for gems)
 
 RUN apt-get update
@@ -15,10 +17,14 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata
 
 # Python/ruby packages
 #RUN apt-get install --no-install-recommends -y python3-setuptools python3-dev python3-pip ruby
+RUN apt-get intall --no-install-recommends -y python3-dev python3-markupsafe
 
 # Packages for esesc
 RUN apt-get install --no-install-recommends -y libboost-dev cmake flex bison libpixman-1-dev libbz2-dev
 RUN apt-get install --no-install-recommends -y libsdl2-dev python2.7 libncurses5-dev libncursesw5-dev
+
+# apt-get install qt5-default 
+# groupadd -g513 masc
 
 # Packages for gem5
 #RUN apt-get install --no-install-recommends -y python-six m4 scons zlib1g zlib1g-dev libprotobuf-dev protobuf-compiler libprotoc-dev libgoogle-perftools-dev python-dev python
@@ -63,6 +69,13 @@ RUN curl https://bazel.build/bazel-release.pub.gpg | apt-key add - \
 
 # Packages for debugging when the image fails
 #RUN apt-get install --no-install-recommends -y vim gdb
+
+RUN git clone https://github.com/ncopa/su-exec.git \
+ && make -C su-exec \
+ && cp su-exec/su-exec /usr/local/bin/
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # Leave this as the default directory (just clean)
 WORKDIR /root/
