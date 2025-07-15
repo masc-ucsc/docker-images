@@ -4,6 +4,12 @@
 
  This includes ESESC, livehd, and Pyrope
 
+Remember, when running docker remove it (`docker run --rm`) on exit. Eg.: interactive bash
+
+```
+docker run -it  --rm DOCKER_IMAGE -c /bin/bash
+```
+
  To run in interactive mode:
 
 ```

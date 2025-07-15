@@ -11,10 +11,12 @@ TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
 # }
 #
 
-docker build -f archlinux-masc/Dockerfile -t mascucsc/archlinux-masc:${TAG_DATE} ./archlinux-masc 2>&1 | tee archlinux.log
-docker build -f alpine-masc/Dockerfile    -t mascucsc/alpine-masc:${TAG_DATE}    ./alpine-masc    2>&1 | tee alpine.log
-docker build -f hagent-builder/Dockerfile    -t mascucsc/hagent-builder:${TAG_DATE}    ./hagent-builder    2>&1 | tee hagent.log
+#docker build -f archlinux-masc/Dockerfile -t mascucsc/archlinux-masc:${TAG_DATE} ./archlinux-masc 2>&1 | tee archlinux.log
+#docker build -f alpine-masc/Dockerfile    -t mascucsc/alpine-masc:${TAG_DATE}    ./alpine-masc    2>&1 | tee alpine.log
+docker build -f hagent-builder/Dockerfile -t mascucsc/hagent-builder:${TAG_DATE} ./hagent-builder 2>&1 | tee hagent.log
+docker build -f hagent-xiangshan/Dockerfile -t mascucsc/hagent-xiangshan:${TAG_DATE} ./hagent-xiangshan 2>&1 | tee xiangshan.log
 
+#######################################
 # Older no longer maintained dockerfiles
 #docker build -f kaliriscv-masc/Dockerfile -t mascucsc/kaliriscv-masc:${TAG_DATE} ./kaliriscv-masc 2>&1 | tee kaliriscv.log
 #docker build -f bazelcache-masc/Dockerfile    -t mascucsc/bazelcache-masc:${TAG_DATE}    ./bazelcache-masc    2>&1 | tee bazelcache.log

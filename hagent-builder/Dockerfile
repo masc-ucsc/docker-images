@@ -35,10 +35,10 @@ RUN apt-get update && \
       rapidjson-dev \
       libffi-dev \
       sudo \
+      time \
       libboost-all-dev && \
     ln -snf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
-    echo "America/Los_Angeles" > /etc/timezone && \
-    rm -rf /var/lib/apt/lists/*
+    echo "America/Los_Angeles" > /etc/timezone
 
 # install bazelisk (symlinked to bazel for compatibility)
 RUN curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 \
@@ -60,12 +60,19 @@ RUN echo 'export PATH='"$CONDA_DIR"'/bin:$PATH' > /etc/profile.d/conda.sh
 # install OSS-CAD suite
 ENV OSS_CAD_DIR=/usr/local/oss-cad-suite
 
-RUN curl -L https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-05-26/oss-cad-suite-linux-x64-20250526.tgz \
+RUN curl -L https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-06-30/oss-cad-suite-linux-x64-20250630.tgz \
       -o /tmp/oss-cad-suite.tgz && \
     mkdir -p "$OSS_CAD_DIR" && \
     tar xzf /tmp/oss-cad-suite.tgz -C /usr/local && \
     rm /tmp/oss-cad-suite.tgz && \
     echo "source $OSS_CAD_DIR/environment" > /etc/profile.d/oss_cad.sh
+
+# chisel
+RUN curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/0.13.0-M0/mill -o /usr/local/bin/mill && \
+    chmod 755 /usr/local/bin/mill
+RUN apt-get install -y g++-riscv64-linux-gnu openjdk-11-jre flex bison autoconf
+RUN apt-get install -y sqlite3 libsqlite3-dev libzstd-dev libreadline6-dev libsdl2-dev zlib1g-dev
+
 
 # build and install su-exec for dropping privileges
 RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
@@ -73,10 +80,24 @@ RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
     cp /tmp/su-exec/su-exec /usr/local/bin/ && \
     rm -rf /tmp/su-exec
 
+# Some cleanup for space
+RUN rm -rf /var/lib/apt/lists/*
+
 # copy entrypoint and make executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # default working directory
-WORKDIR /root/
+RUN mkdir -p /code/rtl /code/verif /code/docs /code/rundir /app
+WORKDIR /code/rundir
+
+# Create default user with UID 9001 in Dockerfile
+RUN groupadd -g 9001 guser && \
+    useradd --create-home --shell /bin/bash --uid 9001 --gid guser user && \
+    echo "user:user" | chpasswd && \
+    echo "user ALL=(ALL) ALL" >> /etc/sudoers
+
+# set ownership in Dockerfile
+RUN chown -R user:guser /code /app
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

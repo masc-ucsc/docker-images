@@ -1,21 +1,48 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Add local user
-# Either use the LOCAL_USER_ID if passed in at runtime or
-# fallback
+if [ "$(id -u)" != "0" ]; then
+  echo "Not running as root (UID: $(id -u)), skipping user setup"
 
-# FIXME: find mount directory and add user automatically
-#  docker run -it -v $HOME:/home/potato mascucsc/archlinux-masc
-#  to get uid: stat -c '%u' /home/*
-#  to get gid: stat -c '%g' /home/*
+  # Just exec the command directly without su-exec
+  if [ $# -gt 0 ]; then
+    exec bash --login -c "$*"
+  else
+    exec bash --login
+  fi
+fi
+
+# su-exec must be present
+command -v su-exec >/dev/null ||
+  {
+    echo "ERROR: su-exec not found"
+    exit 1
+  }
+
+# bash must be present
+command -v bash >/dev/null ||
+  {
+    echo "ERROR: bash not found"
+    exit 1
+  }
+
+# ——————————————————————————————————————————————————————
+# Create the unprivileged user "user" with a fixed UID if needed
+# ——————————————————————————————————————————————————————
 
 USER_ID=${LOCAL_USER_ID:-9001}
 
-echo "Starting with UID : $USER_ID"
-groupadd -g ${USER_ID} guser
-useradd  -m -p user -s /bin/bash -u $USER_ID -G guser user
-echo "user ALL=(ALL) ALL" >>/etc/sudoers
+if [ "$USER_ID" != "9001" ]; then
+  echo "Changing UID to $USER_ID"
+  usermod -u "$USER_ID" user
+  chown -R user:guser /code /app
+fi
 
-#export HOME=/home/user
+# If the container was given a command, pass it to `bash -c …`,
+# otherwise just drop you into an interactive login shell.
 
-su - user "$@"
+if [ $# -gt 0 ]; then
+  exec su-exec user bash --login -c "$*"
+else
+  exec su-exec user bash --login
+fi
