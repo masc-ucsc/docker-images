@@ -1,4 +1,5 @@
-#!/bin/bash
+#
+#/bin/bash
 
 TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
 
@@ -15,7 +16,11 @@ TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
 #docker build -f alpine-masc/Dockerfile    -t mascucsc/alpine-masc:${TAG_DATE}    ./alpine-masc    2>&1 | tee alpine.log
 docker build -f hagent-builder/Dockerfile -t mascucsc/hagent-builder:${TAG_DATE} ./hagent-builder 2>&1 | tee hagent.log
 docker build -f hagent-xiangshan/Dockerfile -t mascucsc/hagent-xiangshan:${TAG_DATE} ./hagent-xiangshan 2>&1 | tee xiangshan.log
+<<<<<<< HEAD
 docker build -f hagent-simplechisel/Dockerfile -t mascucsc/hagent-simplechisel:${TAG_DATE} ./hagent-simplechisel 2>&1 | tee simplechisel.log
+=======
+docker build -f hagent-cva6/Dockerfile -t mascucsc/hagent-cva6:${TAG_DATE} ./hagent-cva6 2>&1 | tee cva6.log
+>>>>>>> 7241073 (Added hagent-cva6 Dockerfile)
 
 #######################################
 # Older no longer maintained dockerfiles
