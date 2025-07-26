@@ -14,7 +14,12 @@ docker tag mascucsc/hagent-builder:${TAG_DATE} mascucsc/hagent-builder:latest
 docker push mascucsc/hagent-builder:latest
 
 docker tag mascucsc/hagent-xiangshan:${TAG_DATE} mascucsc/hagent-xiangshan:latest
+docker push mascucsc/hagent-xiangshan:${TAG_DATE}
 docker push mascucsc/hagent-xiangshan:latest
+
+docker tag mascucsc/hagent-simplechisel:${TAG_DATE} mascucsc/hagent-simplechisel:latest
+docker push mascucsc/hagent-simplechisel:${TAG_DATE}
+docker push mascucsc/hagent-simplechisel:latest
 
 #docker tag  mascucsc/bazelcache-masc:${TAG_DATE} mascucsc/bazelcache-masc:latest
 #docker push mascucsc/bazelcache-masc:latest

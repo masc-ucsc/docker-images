@@ -1,0 +1,31 @@
+diff --git a/Makefile b/Makefile
+index d9b23d14c..148a6fb29 100644
+--- a/Makefile
++++ b/Makefile
+@@ -15,7 +15,12 @@
+ # See the Mulan PSL v2 for more details.
+ #***************************************************************************************
+ 
++ifeq ($(DEBUG_VERILOG),1)
++BUILD_DIR = ./build_debug
++else
+ BUILD_DIR = ./build
++endif
++
+ RTL_DIR = $(BUILD_DIR)/rtl
+ 
+ # import docker support
+@@ -77,8 +82,13 @@ MILL_BUILD_ARGS = -Djvm-xmx=$(JVM_XMX) -Djvm-xss=$(JVM_XSS)
+ # common chisel args
+ FPGA_MEM_ARGS = --firtool-opt "--repl-seq-mem --repl-seq-mem-file=$(TOP).$(RTL_SUFFIX).conf"
+ SIM_MEM_ARGS = --firtool-opt "--repl-seq-mem --repl-seq-mem-file=$(SIM_TOP).$(RTL_SUFFIX).conf"
++ifeq ($(DEBUG_VERILOG),1)
++MFC_ARGS = --target $(CHISEL_TARGET) \
++           --firtool-opt "-O=debug --disable-annotation-unknown --lowering-options=explicitBitcast,disallowLocalVariables,disallowPortDeclSharing"
++else
+ MFC_ARGS = --target $(CHISEL_TARGET) \
+            --firtool-opt "-O=release --disable-annotation-unknown --lowering-options=explicitBitcast,disallowLocalVariables,disallowPortDeclSharing,locationInfoStyle=none"
++endif
+ 
+ ifeq ($(CHISEL_TARGET),systemverilog)
+ MFC_ARGS += --split-verilog --dump-fir

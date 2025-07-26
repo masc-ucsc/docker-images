@@ -1,0 +1,63 @@
+# hagent.yaml
+profiles:
+  - name: Generate XiangShan Verilog
+    description: "Building XiangShan Release Verilog from Scala/Chisel sources"
+    memory: 32  # in GB
+    configuration:
+      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      output: "track_dir('build/rtl', ext='.sv')"
+      environment:
+        NOOP_HOME: "/code/XiangShan"
+        NEMU_HOME: "/code/NEMU"
+    apis:
+      - name: compile
+        description: "Build XiangShan Verilog RTL"
+        command: "make CONFIG=MinimalConfig EMU_THREADS=2 sim-verilog"
+
+  - name: Generate XiangShan Debug Verilog
+    description: "Building XiangShan Debug Verilog from Scala/Chisel sources"
+    memory: 32  # in GB
+    configuration:
+      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      output: "track_dir('build_debug/rtl', ext='.sv')"
+      environment:
+        NOOP_HOME: "/code/XiangShan"
+        NEMU_HOME: "/code/NEMU"
+    apis:
+      - name: compile
+        description: "Build XiangShan Debug Verilog RTL"
+        command: "make DEBUG_VERILOG=1 CONFIG=MinimalConfig EMU_THREADS=2 sim-verilog"
+
+  - name: XiangShan Emulator
+    description: "Building XiangShan Emulator"
+    memory: 32  # in GB
+    configuration:
+      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      output: "track_dir('build/rtl', ext='')"
+      environment:
+        NOOP_HOME: "/code/XiangShan"
+        NEMU_HOME: "/code/NEMU"
+    apis:
+      - name: compile
+        description: "Build XiangShan Emulator"
+        command: "make CONFIG=MinimalConfig EMU_THREADS=2 emu"
+      - name: run
+        description: "Run emulator for 50K cycles without VCD dump"
+        command: "./build/emu -C50000 -i ./ready-to-run/coremark-2-iteration.bin --diff ./ready-to-run/riscv64-nemu-interpreter-so"
+
+  - name: XiangShan Emulator with VCD Trace
+    description: "Building and running XiangShan Emulator with VCD trace generation"
+    memory: 32  # in GB
+    configuration:
+      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      output: "track_dir('build/rtl', ext='')"
+      environment:
+        NOOP_HOME: "/code/XiangShan"
+        NEMU_HOME: "/code/NEMU"
+    apis:
+      - name: compile
+        description: "Build XiangShan Emulator with trace support"
+        command: "make CONFIG=MinimalConfig EMU_THREADS=2 EMU_TRACE=1 emu"
+      - name: run
+        description: "Run emulator for 7500 cycles with VCD dump between cycles 6000-7000"
+        command: "./build/emu -C7500 -b 6000 -e 7000 --dump-wave -i ./ready-to-run/coremark-2-iteration.bin --diff ./ready-to-run/riscv64-nemu-interpreter-so"
