@@ -1,0 +1,30 @@
+profiles:
+  - name: CVA6 Spec Builder
+    description: "Generate specification from CVA6 RTL using run_spec_builder.py"
+    memory: 8
+    configuration:
+      source: "track_dir('cva6/core', ext='.sv')"
+      output: "track_dir('outputs', ext='')"
+      environment:
+        CVA6_HOME: "/code/cva6"
+        DUT_ROOT: "/code/cva6"
+        SLANG_BIN: "/mnt/slang/build/bin/slang"
+    apis:
+      - name: spec_builder
+        description: "Run spec builder for CVA6 load_store_unit"
+        command: >
+          bash -lc '
+            poetry run python hagent/step/sva_gen/run_spec_builder.py \
+              --mode single \
+              --slang ${SLANG_BIN} \
+              --llm-conf hagent/step/sva_gen/spec_prompt.yaml \
+              --include /code/cva6/core/include \
+              --rtl /code/cva6/core \
+              --top load_store_unit
+          '
+
+#docker run --rm -it \
+#  -v /soe/dkohli1/Divya/ProjectSVA/Spring2025/spec_gen:/mnt/spec_gen \
+#  -e SLANG_BIN=/mnt/slang/build/bin/slang \
+#  mascucsc/hagent-cva6:latest
+
