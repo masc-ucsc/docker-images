@@ -24,7 +24,7 @@ profiles:
           '
 
 #docker run --rm -it \
-#  -v /soe/dkohli1/Divya/ProjectSVA/Spring2025/spec_gen:/mnt/spec_gen \
+#  -v <path>/spec_gen:/mnt/spec_gen \
 #  -e SLANG_BIN=/mnt/slang/build/bin/slang \
 #  mascucsc/hagent-cva6:latest
 
