@@ -86,6 +86,7 @@ RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
 
+
 # copy entrypoint and make executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
@@ -93,6 +94,10 @@ RUN chmod 755 /usr/local/bin/entrypoint.sh
 # default working directory
 RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers
 
+# TODO
+#COPY slang-slicer /usr/local/bin/slice-slicer
+
+# TODO
 # Create MCP wrapper for hagent.yaml commands
 #COPY mcp-hagent-wrapper/ /code/mcp-servers/hagent/
 #COPY mcp-filesystem-server/ /code/mcp-servers/filesystem/

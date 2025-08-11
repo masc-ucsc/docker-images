@@ -4,7 +4,8 @@ profiles:
     description: "Building XiangShan Release Verilog from Scala/Chisel sources"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      source: "track_dir('src/main/scala', ext='.scala')"
+      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
       output: "track_dir('build/rtl', ext='.sv')"
       environment:
         NOOP_HOME: "/code/XiangShan"
@@ -18,7 +19,8 @@ profiles:
     description: "Building XiangShan Debug Verilog from Scala/Chisel sources"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      source: "track_dir('src/main/scala', ext='.scala')"
+      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
       output: "track_dir('build_debug/rtl', ext='.sv')"
       environment:
         NOOP_HOME: "/code/XiangShan"
@@ -32,7 +34,8 @@ profiles:
     description: "Building XiangShan Emulator"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      source: "track_dir('src/main/scala', ext='.scala')"
+      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
       output: "track_dir('build/rtl', ext='')"
       environment:
         NOOP_HOME: "/code/XiangShan"
@@ -49,7 +52,8 @@ profiles:
     description: "Building and running XiangShan Emulator with VCD trace generation"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala/xiangshan', ext='.scala')"
+      source: "track_dir('src/main/scala', ext='.scala')"
+      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
       output: "track_dir('build/rtl', ext='')"
       environment:
         NOOP_HOME: "/code/XiangShan"
