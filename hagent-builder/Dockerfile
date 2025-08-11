@@ -35,6 +35,8 @@ RUN apt-get update && \
       rapidjson-dev \
       libffi-dev \
       sudo \
+      nodejs \
+      npm \
       time \
       libboost-all-dev && \
     ln -snf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
@@ -80,6 +82,7 @@ RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
     cp /tmp/su-exec/su-exec /usr/local/bin/ && \
     rm -rf /tmp/su-exec
 
+
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
 
@@ -88,8 +91,15 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # default working directory
-RUN mkdir -p /code/rtl /code/verif /code/docs /code/rundir /app
-WORKDIR /code/rundir
+RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers
+
+# Create MCP wrapper for hagent.yaml commands
+#COPY mcp-hagent-wrapper/ /code/mcp-servers/hagent/
+#COPY mcp-filesystem-server/ /code/mcp-servers/filesystem/
+
+# Install MCP dependencies
+#RUN cd /code/mcp-servers/hagent && npm install
+#RUN cd /code/mcp-servers/filesystem && npm install
 
 # Create default user with UID 9001 in Dockerfile
 RUN groupadd -g 9001 guser && \
