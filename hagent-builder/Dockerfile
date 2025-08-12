@@ -92,7 +92,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # default working directory
-RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers
+RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers /code/workspace
 
 # TODO
 #COPY slang-slicer /usr/local/bin/slice-slicer

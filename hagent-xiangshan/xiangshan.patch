@@ -1,21 +1,41 @@
+Submodule ChiselAIA contains modified content
+Submodule Utility contains modified content
+diff --git a/ChiselAIA/Utility/src/main/scala/utility/FileRegisters.scala b/ChiselAIA/Utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/ChiselAIA/Utility/src/main/scala/utility/FileRegisters.scala
++++ b/ChiselAIA/Utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
 diff --git a/Makefile b/Makefile
-index d9b23d14c..148a6fb29 100644
+index d9b23d14c..150514cb3 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -15,7 +15,12 @@
+@@ -15,7 +15,14 @@
  # See the Mulan PSL v2 for more details.
  #***************************************************************************************
  
+-BUILD_DIR = ./build
++HAGENT_BUILD_DIR ?= ./
++
 +ifeq ($(DEBUG_VERILOG),1)
-+BUILD_DIR = ./build_debug
++BUILD_DIR = ${HAGENT_BUILD_DIR}/build_dbg
 +else
- BUILD_DIR = ./build
++BUILD_DIR = ${HAGENT_BUILD_DIR}/build_opt
 +endif
 +
  RTL_DIR = $(BUILD_DIR)/rtl
  
  # import docker support
-@@ -77,8 +82,13 @@ MILL_BUILD_ARGS = -Djvm-xmx=$(JVM_XMX) -Djvm-xss=$(JVM_XSS)
+@@ -77,8 +84,13 @@ MILL_BUILD_ARGS = -Djvm-xmx=$(JVM_XMX) -Djvm-xss=$(JVM_XSS)
  # common chisel args
  FPGA_MEM_ARGS = --firtool-opt "--repl-seq-mem --repl-seq-mem-file=$(TOP).$(RTL_SUFFIX).conf"
  SIM_MEM_ARGS = --firtool-opt "--repl-seq-mem --repl-seq-mem-file=$(SIM_TOP).$(RTL_SUFFIX).conf"
@@ -29,3 +49,619 @@ index d9b23d14c..148a6fb29 100644
  
  ifeq ($(CHISEL_TARGET),systemverilog)
  MFC_ARGS += --split-verilog --dump-fir
+@@ -305,37 +317,38 @@ reformat:
+ 
+ # verilator simulation
+ emu-mk: sim-verilog
+-	$(MAKE) -C ./difftest emu-mk SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	@mkdir -p $(BUILD_DIR); \
++	$(MAKE) -C ./difftest emu-mk SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ emu: $(call docker-deps,emu-mk)
+-	$(MAKE) -C ./difftest emu SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest emu SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ emu-run: emu
+-	$(MAKE) -C ./difftest emu-run SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest emu-run SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ # vcs simulation
+ simv: sim-verilog
+-	$(MAKE) -C ./difftest simv SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest simv SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ simv-run:
+-	$(MAKE) -C ./difftest simv-run SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest simv-run SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ # galaxsim simulation
+ xsim: sim-verilog
+-	$(MAKE) -C ./difftest xsim SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest xsim SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ xsim-run:
+-	$(MAKE) -C ./difftest xsim-run SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest xsim-run SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ # palladium simulation
+ pldm-build: sim-verilog
+-	$(MAKE) -C ./difftest pldm-build SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest pldm-build SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ pldm-run:
+-	$(MAKE) -C ./difftest pldm-run SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest pldm-run SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ pldm-debug:
+-	$(MAKE) -C ./difftest pldm-debug SIM_TOP=SimTop DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
++	$(MAKE) -C ./difftest pldm-debug SIM_TOP=SimTop BUILD_DIR=$(BUILD_DIR) DESIGN_DIR=$(NOOP_HOME) NUM_CORES=$(NUM_CORES) RTL_SUFFIX=$(RTL_SUFFIX)
+ 
+ include Makefile.test
+ 
+Submodule coupledL2 contains modified content
+Submodule HuanCun contains modified content
+Submodule Utility contains modified content
+diff --git a/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala b/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
++++ b/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+diff --git a/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala b/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
+index 5b0fee6..3195b3f 100644
+--- a/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
++++ b/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
+@@ -531,7 +531,7 @@ object TestTop_L2 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2_Standalone extends App {
+@@ -550,7 +550,7 @@ object TestTop_L2_Standalone extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3 extends App {
+@@ -569,7 +569,7 @@ object TestTop_L2L3 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_FullSys extends App {
+@@ -587,5 +587,5 @@ object TestTop_FullSys extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+diff --git a/coupledL2/src/test/scala/TestTop.scala b/coupledL2/src/test/scala/TestTop.scala
+index 3dd6eba..44810b6 100644
+--- a/coupledL2/src/test/scala/TestTop.scala
++++ b/coupledL2/src/test/scala/TestTop.scala
+@@ -688,7 +688,7 @@ object TestTop_L2 extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2_Standalone extends App {
+@@ -706,7 +706,7 @@ object TestTop_L2_Standalone extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3 extends App {
+@@ -729,7 +729,7 @@ object TestTop_L2L3 extends App {
+ 
+   ChiselDB.addToFileRegisters
+   Constantin.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3L2 extends App {
+@@ -752,7 +752,7 @@ object TestTop_L2L3L2 extends App {
+ 
+   ChiselDB.addToFileRegisters
+   Constantin.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_fullSys extends App {
+@@ -773,5 +773,5 @@ object TestTop_fullSys extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+diff --git a/coupledL2/src/test/scala/chi/TestTop.scala b/coupledL2/src/test/scala/chi/TestTop.scala
+index 600e032..93b72d2 100644
+--- a/coupledL2/src/test/scala/chi/TestTop.scala
++++ b/coupledL2/src/test/scala/chi/TestTop.scala
+@@ -229,7 +229,7 @@ object TestTopCHIHelper {
+     )
+ 
+     ChiselDB.addToFileRegisters
+-    FileRegisters.write("./build")
++    FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+   }
+ }
+ 
+Submodule utility contains modified content
+diff --git a/coupledL2/utility/src/main/scala/utility/FileRegisters.scala b/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
++++ b/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+Submodule difftest contains modified content
+diff --git a/difftest/Makefile b/difftest/Makefile
+index abaf6d12..fa33b571 100644
+--- a/difftest/Makefile
++++ b/difftest/Makefile
+@@ -23,7 +23,7 @@ NUM_CORES  ?= 1
+ 
+ MFC 	   ?= 1
+ 
+-BUILD_DIR  = $(DESIGN_DIR)/build
++BUILD_DIR  ?= $(DESIGN_DIR)/build
+ 
+ RTL_DIR = $(BUILD_DIR)/rtl
+ RTL_SUFFIX ?= sv
+diff --git a/difftest/src/main/scala/common/FileControl.scala b/difftest/src/main/scala/common/FileControl.scala
+index 6e6d6222..4c531db3 100644
+--- a/difftest/src/main/scala/common/FileControl.scala
++++ b/difftest/src/main/scala/common/FileControl.scala
+@@ -22,7 +22,7 @@ object FileControl {
+   def write(fileStream: Iterable[String], fileName: String): Unit = write(fileStream, fileName, append = false)
+ 
+   def write(fileStream: Iterable[String], fileName: String, append: Boolean): Unit = {
+-    val outputDir = Paths.get(sys.env("NOOP_HOME"), "build", "generated-src")
++    val outputDir = Paths.get(sys.env.getOrElse("BUILD_DIR", "build"), "generated-src")
+     write(fileStream, fileName, outputDir.toString, append)
+   }
+ 
+diff --git a/difftest/vcs.mk b/difftest/vcs.mk
+index 24a0ff45..c365e4d8 100644
+--- a/difftest/vcs.mk
++++ b/difftest/vcs.mk
+@@ -57,7 +57,7 @@ endif
+ endif
+ 
+ ifeq ($(VCS),verilator)
+-VCS_FLAGS += --exe --cc --main --top-module $(VCS_TOP) -Wno-WIDTH --max-num-width 150000
++VCS_FLAGS += --exe --cc --main --top-module $(VCS_TOP) -Wno-WIDTH -Wno-BADVLTPRAGMA --max-num-width 150000
+ VCS_FLAGS += --instr-count-dpi 1 --timing +define+VERILATOR_5
+ VCS_FLAGS += -Mdir $(VCS_BUILD_DIR)  --compiler gcc
+ VCS_CXXFLAGS += -std=c++20
+diff --git a/difftest/verilator.mk b/difftest/verilator.mk
+index ec42902c..7ec89e74 100644
+--- a/difftest/verilator.mk
++++ b/difftest/verilator.mk
+@@ -105,6 +105,7 @@ VERILATOR_FLAGS =                   \
+   +define+RANDOMIZE_GARBAGE_ASSIGN  \
+   +define+RANDOMIZE_DELAY=0         \
+   -Wno-STMTDLY -Wno-WIDTH           \
++	-Wno-BADVLTPRAGMA                 \
+   --max-num-width 150000            \
+   --assert --x-assign unique        \
+   --output-split 30000              \
+Submodule huancun contains modified content
+Submodule Utility contains modified content
+diff --git a/huancun/Utility/src/main/scala/utility/FileRegisters.scala b/huancun/Utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/huancun/Utility/src/main/scala/utility/FileRegisters.scala
++++ b/huancun/Utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+diff --git a/huancun/src/test/scala/huancun/TestTop.scala b/huancun/src/test/scala/huancun/TestTop.scala
+index 272b919..82d4a43 100644
+--- a/huancun/src/test/scala/huancun/TestTop.scala
++++ b/huancun/src/test/scala/huancun/TestTop.scala
+@@ -537,7 +537,7 @@ object TestTop_L2 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","./build"))
+ }
+ 
+ object TestTop_L2_Standalone extends App {
+@@ -556,7 +556,7 @@ object TestTop_L2_Standalone extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","./build"))
+ }
+ 
+ object TestTop_L2L3 extends App {
+@@ -575,7 +575,7 @@ object TestTop_L2L3 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","./build"))
+ }
+ 
+ object TestTop_FullSys extends App {
+@@ -593,5 +593,5 @@ object TestTop_FullSys extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","./build"))
+ }
+Submodule openLLC contains modified content
+Submodule coupledL2 contains modified content
+Submodule HuanCun contains modified content
+Submodule Utility contains modified content
+diff --git a/openLLC/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala b/openLLC/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/openLLC/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
++++ b/openLLC/coupledL2/HuanCun/Utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+diff --git a/openLLC/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala b/openLLC/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
+index 5b0fee6..3195b3f 100644
+--- a/openLLC/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
++++ b/openLLC/coupledL2/HuanCun/src/test/scala/huancun/TestTop.scala
+@@ -531,7 +531,7 @@ object TestTop_L2 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2_Standalone extends App {
+@@ -550,7 +550,7 @@ object TestTop_L2_Standalone extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3 extends App {
+@@ -569,7 +569,7 @@ object TestTop_L2L3 extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_FullSys extends App {
+@@ -587,5 +587,5 @@ object TestTop_FullSys extends App {
+     FirtoolOption("--disable-annotation-unknown")
+   ))
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"))
+ }
+diff --git a/openLLC/coupledL2/src/test/scala/TestTop.scala b/openLLC/coupledL2/src/test/scala/TestTop.scala
+index 3dd6eba..44810b6 100644
+--- a/openLLC/coupledL2/src/test/scala/TestTop.scala
++++ b/openLLC/coupledL2/src/test/scala/TestTop.scala
+@@ -688,7 +688,7 @@ object TestTop_L2 extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2_Standalone extends App {
+@@ -706,7 +706,7 @@ object TestTop_L2_Standalone extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3 extends App {
+@@ -729,7 +729,7 @@ object TestTop_L2L3 extends App {
+ 
+   ChiselDB.addToFileRegisters
+   Constantin.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_L2L3L2 extends App {
+@@ -752,7 +752,7 @@ object TestTop_L2L3L2 extends App {
+ 
+   ChiselDB.addToFileRegisters
+   Constantin.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+ 
+ object TestTop_fullSys extends App {
+@@ -773,5 +773,5 @@ object TestTop_fullSys extends App {
+   )
+ 
+   ChiselDB.addToFileRegisters
+-  FileRegisters.write("./build")
++  FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+ }
+diff --git a/openLLC/coupledL2/src/test/scala/chi/TestTop.scala b/openLLC/coupledL2/src/test/scala/chi/TestTop.scala
+index 600e032..93b72d2 100644
+--- a/openLLC/coupledL2/src/test/scala/chi/TestTop.scala
++++ b/openLLC/coupledL2/src/test/scala/chi/TestTop.scala
+@@ -229,7 +229,7 @@ object TestTopCHIHelper {
+     )
+ 
+     ChiselDB.addToFileRegisters
+-    FileRegisters.write("./build")
++    FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+   }
+ }
+ 
+Submodule utility contains modified content
+diff --git a/openLLC/coupledL2/utility/src/main/scala/utility/FileRegisters.scala b/openLLC/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/openLLC/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
++++ b/openLLC/coupledL2/utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+diff --git a/openLLC/src/test/scala/TestTop.scala b/openLLC/src/test/scala/TestTop.scala
+index 65b60e5..ba869aa 100644
+--- a/openLLC/src/test/scala/TestTop.scala
++++ b/openLLC/src/test/scala/TestTop.scala
+@@ -346,7 +346,7 @@ object TestTopSoCHelper {
+     ))
+ 
+     ChiselDB.addToFileRegisters
+-    FileRegisters.write("./build")
++    FileRegisters.write(sys.env.getOrElse("BUILD_DIR","build"))
+   }
+ }
+ 
+Submodule utility contains modified content
+diff --git a/openLLC/utility/src/main/scala/utility/ExtractVerilogModules.scala b/openLLC/utility/src/main/scala/utility/ExtractVerilogModules.scala
+index 1ed0a5b..1e577d3 100644
+--- a/openLLC/utility/src/main/scala/utility/ExtractVerilogModules.scala
++++ b/openLLC/utility/src/main/scala/utility/ExtractVerilogModules.scala
+@@ -174,10 +174,10 @@ trait VMEArgParser {
+   val usage = """
+         Usage: sbt "run [OPTION...]"
+             -s, --source   the verilog file generated by chisel, all in one file
+-                           default: $NOOP_HOME/build/XSSimTop.v
++                           default: $BUILD_DIR/XSSimTop.v
+             -h, --help     print this help info
+             -o, --output   the place you want to store your extracted verilog
+-                           default: $NOOP_HOME/build/extracted
++                           default: $BUILD_DIR/extracted
+             -u, --usr      your name, will be used to name the output folder
+                            default: current user
+             -m, --modules  the top modules you would like to extract verilog from
+@@ -216,9 +216,9 @@ trait VMEArgParser {
+   def wrapParams(args: Array[String]): (String, List[String], String, String) = {
+     val argL = args.toList
+     val paramMap = parse(argL)
+-    (paramMap("source").map(_.asInstanceOf[String]).getOrElse(env("NOOP_HOME")+"/build/XSSimTop.v"),
++    (paramMap("source").map(_.asInstanceOf[String]).getOrElse(env("BUILD_DIR")+"/XSSimTop.v"),
+       paramMap("modules").map(_.asInstanceOf[List[String]]).getOrElse(List("IFU")),
+-      paramMap("output").map(_.asInstanceOf[String]).getOrElse(env("NOOP_HOME")+"/build/extracted/"),
++      paramMap("output").map(_.asInstanceOf[String]).getOrElse(env("BUILD_DIR")+"/extracted/"),
+       paramMap("usr").map(_.asInstanceOf[String]).getOrElse("whoami".!!.init))
+   }
+ }
+diff --git a/openLLC/utility/src/main/scala/utility/FileRegisters.scala b/openLLC/utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/openLLC/utility/src/main/scala/utility/FileRegisters.scala
++++ b/openLLC/utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }
+diff --git a/scripts/xiangshan.py b/scripts/xiangshan.py
+index 55c096ad7..c409627f8 100644
+--- a/scripts/xiangshan.py
++++ b/scripts/xiangshan.py
+@@ -52,7 +52,8 @@ class XSArgs(object):
+     am_home = os.path.join(noop_home, "../nexus-am")
+     dramsim3_home = os.path.join(noop_home, "../DRAMsim3")
+     rvtest_home = os.path.join(noop_home, "../riscv-tests")
+-    default_wave_home = os.path.join(noop_home, "build")
++    build_dir = os.getenv("BUILD_DIR","build")
++    default_wave_home = build_dir
+     wave_home   = default_wave_home
+ 
+     def __init__(self, args):
+@@ -108,6 +109,7 @@ class XSArgs(object):
+ 
+     def get_env_variables(self):
+         all_env = {
++            "BUILD_DIR"    : self.build_dir,
+             "NOOP_HOME"    : self.noop_home,
+             "NEMU_HOME"    : self.nemu_home,
+             "WAVE_HOME"    : self.wave_home,
+@@ -271,7 +273,7 @@ class XiangShan(object):
+         diff_args = "--no-diff" if self.args.disable_diff else ""
+         chiseldb_args = "--dump-db" if not self.args.disable_db else ""
+         gcpt_restore_args = f"-r {self.args.gcpt_restore_bin}" if len(self.args.gcpt_restore_bin) != 0 else ""
+-        return_code = self.__exec_cmd(f'ulimit -s {32 * 1024}; {numa_args} $NOOP_HOME/build/emu -i {workload} {emu_args} {fork_args} {diff_args} {chiseldb_args} {gcpt_restore_args}')
++        return_code = self.__exec_cmd(f'ulimit -s {32 * 1024}; {numa_args} $BUILD_DIR/emu -i {workload} {emu_args} {fork_args} {diff_args} {chiseldb_args} {gcpt_restore_args}')
+         return return_code
+ 
+     def run_simv(self, workload):
+@@ -279,8 +281,8 @@ class XiangShan(object):
+         self.show()
+         diff_args = "$NOOP_HOME/"+ args.diff
+         assert_args = "-assert finish_maxfail=30 -assert global_finish_maxfail=10000"
+-        return_code = self.__exec_cmd(f'cd $NOOP_HOME/build && ./simv +workload={workload} +diff={diff_args} +dump-wave=fsdb {assert_args} | tee simv.log')
+-        with open(f"{self.args.noop_home}/build/simv.log") as f:
++        return_code = self.__exec_cmd(f'cd $BUILD_DIR && ./simv +workload={workload} +diff={diff_args} +dump-wave=fsdb {assert_args} | tee simv.log')
++        with open(f"$BUILD_DIR/simv.log") as f:
+             content = f.read()
+             if "Offending" in content or "HIT GOOD TRAP" not in content:
+                 return 1
+@@ -588,11 +590,11 @@ class XiangShan(object):
+             if ret:
+                 if self.args.default_wave_home != self.args.wave_home:
+                     print("copy wave file to " + self.args.wave_home)
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/*.vcd $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/*.fst $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/emu $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/rtl/SimTop.v $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/*.db $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/*.vcd $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/*.fst $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/emu $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/rtl/SimTop.v $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/*.db $WAVE_HOME")
+                 return ret
+         return 0
+ 
+@@ -618,10 +620,10 @@ class XiangShan(object):
+             if ret:
+                 if self.args.default_wave_home != self.args.wave_home:
+                     print("copy wave file to " + self.args.wave_home)
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/*.fsdb $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/simv $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/rtl/SimTop.v $WAVE_HOME")
+-                    self.__exec_cmd(f"cp $NOOP_HOME/build/*.db $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/*.fsdb $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/simv $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/rtl/SimTop.v $WAVE_HOME")
++                    self.__exec_cmd(f"cp $BUILD_DIR/*.db $WAVE_HOME")
+                 return ret
+         return 0
+ 
+diff --git a/src/main/scala/top/Top.scala b/src/main/scala/top/Top.scala
+index 21fb289eb..f4188d0da 100644
+--- a/src/main/scala/top/Top.scala
++++ b/src/main/scala/top/Top.scala
+@@ -504,5 +504,5 @@ object TopMain extends App {
+     }
+   }
+ 
+-  FileRegisters.write(fileDir = "./build", filePrefix = "XSTop.")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR","build"), filePrefix = "XSTop.")
+ }
+diff --git a/src/main/scala/top/XSNoCTop.scala b/src/main/scala/top/XSNoCTop.scala
+index 9d9dbff79..83aec97d4 100644
+--- a/src/main/scala/top/XSNoCTop.scala
++++ b/src/main/scala/top/XSNoCTop.scala
+@@ -512,6 +512,6 @@ object XSNoCDiffTopChecker {
+         |
+         |endmodule
+       """.stripMargin
+-    FileRegisters.writeOutputFile("./build", "XSDiffTopChecker.sv", verilog)
++    FileRegisters.writeOutputFile(sys.env.getOrElse("BUILD_DIR", "build"), "XSDiffTopChecker.sv", verilog)
+   }
+ }
+diff --git a/src/test/scala/top/SimTop.scala b/src/test/scala/top/SimTop.scala
+index 937eabdaa..9ef857868 100644
+--- a/src/test/scala/top/SimTop.scala
++++ b/src/test/scala/top/SimTop.scala
+@@ -123,5 +123,5 @@ object SimTop extends App {
+   // tools: write cpp files
+   ChiselDB.addToFileRegisters
+   Constantin.addToFileRegisters
+-  FileRegisters.write(fileDir = "./build")
++  FileRegisters.write(fileDir = sys.env.getOrElse("BUILD_DIR", "build"))
+ }
+diff --git a/src/test/scala/xiangshan/DecodeTest.scala b/src/test/scala/xiangshan/DecodeTest.scala
+index c4cbca91b..8b7a31a28 100644
+--- a/src/test/scala/xiangshan/DecodeTest.scala
++++ b/src/test/scala/xiangshan/DecodeTest.scala
+@@ -42,7 +42,7 @@ class DecodeUnitTest extends XSTester {
+       VerilatorBackendAnnotation,
+       VerilatorFlags(Seq()),
+       WriteVcdAnnotation,
+-      TargetDirAnnotation("./build")
++      TargetDirAnnotation(sys.env.getOrElse("BUILD_DIR", "build"))
+     )){ dut =>
+       dut.clock.step(10)
+     }
+Submodule utility contains modified content
+diff --git a/utility/src/main/scala/utility/FileRegisters.scala b/utility/src/main/scala/utility/FileRegisters.scala
+index 87c82c6..479dede 100644
+--- a/utility/src/main/scala/utility/FileRegisters.scala
++++ b/utility/src/main/scala/utility/FileRegisters.scala
+@@ -13,7 +13,9 @@ object FileRegisters {
+     files.foldLeft(false)((t, s) => {s._1 == filename | t})
+   }
+ 
+-  def write(fileDir: String = "./build", filePrefix: String = ""): Unit = {
++  private def defaultFileDir: String = sys.env.getOrElse("BUILD_DIR","build")
++
++  def write(fileDir: String = defaultFileDir, filePrefix: String = ""): Unit = {
+     files.foreach { case (filename, contents) =>
+       writeOutputFile(fileDir, filePrefix + filename, contents())
+     }

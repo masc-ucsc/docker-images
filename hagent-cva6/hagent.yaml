@@ -1,13 +1,13 @@
 profiles:
-  - name: CVA6 Spec Builder
+  - name: spec
     description: "Generate specification from CVA6 RTL using run_spec_builder.py"
     memory: 8
     configuration:
-      source: "track_dir('cva6/core', ext='.sv')"
-      output: "track_dir('outputs', ext='')"
-      environment:
-        CVA6_HOME: "/code/cva6"
-        DUT_ROOT: "/code/cva6"
+      # track_repo_dir is relative to /code/workspace/repo
+      source: "track_repo_dir('core', ext='.sv')"
+      # track_build_dir is relative to /code/workspace/build
+      output: "track_build_dir('outputs', ext='')"
+      environment: # Will inherit docker image, so no need to reset CVA6_HOME
         SLANG_BIN: "/mnt/slang/build/bin/slang"
     apis:
       - name: spec_builder
@@ -18,8 +18,8 @@ profiles:
               --mode single \
               --slang ${SLANG_BIN} \
               --llm-conf hagent/step/sva_gen/spec_prompt.yaml \
-              --include /code/cva6/core/include \
-              --rtl /code/cva6/core \
+              --include $HAGENT_REPO_DIR/core/include \
+              --rtl $HAGENT_REPO_DIR/core \
               --top load_store_unit
           '
 

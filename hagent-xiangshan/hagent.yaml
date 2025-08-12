@@ -1,12 +1,12 @@
 # hagent.yaml
 profiles:
-  - name: Generate XiangShan Verilog
+  - name: xiangshan_rtl_opt
     description: "Building XiangShan Release Verilog from Scala/Chisel sources"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala', ext='.scala')"
-      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
-      output: "track_dir('build/rtl', ext='.sv')"
+      source: "track_repo_dir('src/main/scala', ext='.scala')"
+      source: "track_repo_dir('yunsuan/src/main/scala', ext='.scala')"
+      output: "track_build_dir('build_opt/rtl', ext='.sv')"
       environment:
         NOOP_HOME: "/code/XiangShan"
         NEMU_HOME: "/code/NEMU"
@@ -15,13 +15,13 @@ profiles:
         description: "Build XiangShan Verilog RTL"
         command: "make CONFIG=MinimalConfig EMU_THREADS=2 sim-verilog"
 
-  - name: Generate XiangShan Debug Verilog
+  - name: xiangshan_rtl_dbg
     description: "Building XiangShan Debug Verilog from Scala/Chisel sources"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala', ext='.scala')"
-      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
-      output: "track_dir('build_debug/rtl', ext='.sv')"
+      source: "track_repo_dir('src/main/scala', ext='.scala')"
+      source: "track_repo_dir('yunsuan/src/main/scala', ext='.scala')"
+      output: "track_build_dir('build_dbg/rtl', ext='.sv')"
       environment:
         NOOP_HOME: "/code/XiangShan"
         NEMU_HOME: "/code/NEMU"
@@ -30,13 +30,13 @@ profiles:
         description: "Build XiangShan Debug Verilog RTL"
         command: "make DEBUG_VERILOG=1 CONFIG=MinimalConfig EMU_THREADS=2 sim-verilog"
 
-  - name: XiangShan Emulator
+  - name: xiangshan_emu_opt
     description: "Building XiangShan Emulator"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala', ext='.scala')"
-      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
-      output: "track_dir('build/rtl', ext='')"
+      source: "track_repo_dir('src/main/scala', ext='.scala')"
+      source: "track_repo_dir('yunsuan/src/main/scala', ext='.scala')"
+      output: "track_build_dir('build_opt/rtl', ext='')"
       environment:
         NOOP_HOME: "/code/XiangShan"
         NEMU_HOME: "/code/NEMU"
@@ -48,13 +48,13 @@ profiles:
         description: "Run emulator for 50K cycles without VCD dump"
         command: "./build/emu -C50000 -i ./ready-to-run/coremark-2-iteration.bin --diff ./ready-to-run/riscv64-nemu-interpreter-so"
 
-  - name: XiangShan Emulator with VCD Trace
+  - name: xiangshan_emu_vcd
     description: "Building and running XiangShan Emulator with VCD trace generation"
     memory: 32  # in GB
     configuration:
-      source: "track_dir('src/main/scala', ext='.scala')"
-      source: "track_dir('yunsuan/src/main/scala', ext='.scala')"
-      output: "track_dir('build/rtl', ext='')"
+      source: "track_repo_dir('src/main/scala', ext='.scala')"
+      source: "track_repo_dir('yunsuan/src/main/scala', ext='.scala')"
+      output: "track_build_dir('build_opt/rtl', ext='')"
       environment:
         NOOP_HOME: "/code/XiangShan"
         NEMU_HOME: "/code/NEMU"
