@@ -14,6 +14,9 @@ COPY hagent.yaml /code/workspace/repo/
 WORKDIR /code/workspace/repo
 RUN mkdir /code/workspace/build
 
+# This is the default config for CVA6, not set to allow many
+run touch /code/workspace/repo/core/include/_config_pkg.sv
+
 ENV HAGENT_REPO_DIR=/code/workspace/repo
 ENV HAGENT_BUILD_DIR=/code/workspace/build
 

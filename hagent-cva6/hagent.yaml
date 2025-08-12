@@ -29,7 +29,7 @@ profiles:
         command: >
           slang --top load_store_unit --ast-json ${HAGENT_BUILD_DIR}/load_store_unit.json --disable-analysis \
                 --ast-json-source-info --ignore-unknown-modules --allow-use-before-declare --diag-abs-paths \
-                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv -f ./core/Flist.cva6"
+                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv -f ./core/Flist.cva6
         cwd: $HAGENT_REPO_DIR
 
 #docker run --rm -it \
