@@ -6,12 +6,14 @@ profiles:
       # track_repo_dir is relative to /code/workspace/repo
       source: "track_repo_dir('core', ext='.sv')"
       # track_build_dir is relative to /code/workspace/build
-      output: "track_build_dir('outputs', ext='')"
+      output: "track_build_dir('.')"
       environment: # Will inherit docker image, so no need to reset CVA6_HOME
-        SLANG_BIN: "/mnt/slang/build/bin/slang"
+        SLANG_BIN: "/usr/local/bin/slang"
+        HPDCACHE_DIR: "/code/workspace/repo/core/cache_subsystem/hpdcache/"
+        CVA6_REPO_DIR: "/code/workspace/repo/"
     apis:
       - name: spec_builder
-        description: "Run spec builder for CVA6 load_store_unit"
+        description: "Run spec builder for CVA6"
         command: >
           bash -lc '
             poetry run python hagent/step/sva_gen/run_spec_builder.py \
@@ -22,6 +24,13 @@ profiles:
               --rtl $HAGENT_REPO_DIR/core \
               --top load_store_unit
           '
+      - name: run_slang
+        description: "Run slang"
+        command: >
+          slang --top load_store_unit --ast-json ${HAGENT_BUILD_DIR}/load_store_unit.json --disable-analysis \
+                --ast-json-source-info --ignore-unknown-modules --allow-use-before-declare --diag-abs-paths \
+                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv -f ./core/Flist.cva6"
+        cwd: $HAGENT_REPO_DIR
 
 #docker run --rm -it \
 #  -v <path>/spec_gen:/mnt/spec_gen \

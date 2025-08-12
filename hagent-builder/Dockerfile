@@ -18,6 +18,8 @@ RUN apt-get update && \
       gcc \
       g++ \
       clang \
+      cmake \
+      vim \
       llvm \
       curl \
       gnupg \
@@ -81,6 +83,15 @@ RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
     make -C /tmp/su-exec && \
     cp /tmp/su-exec/su-exec /usr/local/bin/ && \
     rm -rf /tmp/su-exec
+
+
+RUN git clone https://github.com/MikePopoloski/slang.git /tmp/slang &&\
+  cd /tmp/slang && \
+  cmake -B build && \
+  cmake --build build -j && \
+  cd build && \
+  make install && \
+  rm -rf /tmp/slang
 
 
 # Some cleanup for space
