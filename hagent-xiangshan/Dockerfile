@@ -14,7 +14,6 @@ COPY xiangshan.patch /code/workspace/repo/
 COPY hagent.yaml /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
-RUN mkdir /code/workspace/build
 
 # Apply the patch
 RUN patch -p1 < xiangshan.patch

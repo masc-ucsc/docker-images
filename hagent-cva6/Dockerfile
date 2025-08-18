@@ -12,7 +12,6 @@ RUN git clone --recursive https://github.com/openhwgroup/cva6.git repo
 COPY hagent.yaml /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
-RUN mkdir /code/workspace/build
 
 # This is the default config for CVA6, not set to allow many
 run touch /code/workspace/repo/core/include/_config_pkg.sv

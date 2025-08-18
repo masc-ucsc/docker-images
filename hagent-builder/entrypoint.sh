@@ -71,10 +71,20 @@ command -v bash >/dev/null ||
 # ——————————————————————————————————————————————————————
 
 USER_ID=${LOCAL_USER_ID:-9001}
+GROUP_ID=${LOCAL_GROUP_ID:-9001}
 
-if [ "$USER_ID" != "9001" ]; then
-  echo "Changing UID to $USER_ID"
-  usermod -u "$USER_ID" user
+if [ "$USER_ID" != "9001" ] || [ "$GROUP_ID" != "9001" ]; then
+  if [ "$USER_ID" != "9001" ]; then
+    echo "Changing UID to $USER_ID"
+    usermod -u "$USER_ID" user
+  fi
+  
+  if [ "$GROUP_ID" != "9001" ]; then
+    echo "Changing GID to $GROUP_ID"
+    groupmod -g "$GROUP_ID" guser
+    usermod -g "$GROUP_ID" user
+  fi
+  
   chown -R user:guser /code /app
 fi
 

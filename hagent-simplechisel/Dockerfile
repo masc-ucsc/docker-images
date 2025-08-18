@@ -11,7 +11,6 @@ RUN git clone https://github.com/masc-ucsc/simplechisel.git repo
 ENV PATH="${OSS_CAD_DIR}/bin/:/usr/local/bin:${HOME}/.local/share/coursier/bin:${PATH}"
 ENV HAGENT_REPO_DIR=/code/workspace/repo
 ENV HAGENT_BUILD_DIR=/code/workspace/build
-RUN mkdir /code/workspace/build
 
 WORKDIR /code/workspace/repo
 RUN export PATH="${OSS_CAD_DIR}/bin/:/usr/local/bin:${HOME}/.local/share/coursier/bin:${PATH}" && sbt compile
