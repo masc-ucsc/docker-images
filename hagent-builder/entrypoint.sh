@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Function to start MCP servers
+# Function to start MCP servers -- Maybe FUTURE
 start_mcp_servers() {
   echo "Starting MCP servers..." >&2
 
@@ -73,19 +73,48 @@ command -v bash >/dev/null ||
 USER_ID=${LOCAL_USER_ID:-9001}
 GROUP_ID=${LOCAL_GROUP_ID:-9001}
 
+# FIXED: Check for UID/GID conflicts before attempting to modify
 if [ "$USER_ID" != "9001" ] || [ "$GROUP_ID" != "9001" ]; then
+  SHOULD_CHANGE_UID=false
+  SHOULD_CHANGE_GID=false
+
+  # Check if we should change UID
   if [ "$USER_ID" != "9001" ]; then
+    if getent passwd "$USER_ID" >/dev/null 2>&1; then
+      echo "WARNING: UID $USER_ID already exists in container, keeping default UID 9001"
+      USER_ID=9001
+    else
+      SHOULD_CHANGE_UID=true
+    fi
+  fi
+
+  # Check if we should change GID
+  if [ "$GROUP_ID" != "9001" ]; then
+    if getent group "$GROUP_ID" >/dev/null 2>&1; then
+      EXISTING_GROUP=$(getent group "$GROUP_ID" | cut -d: -f1)
+      echo "WARNING: GID $GROUP_ID already exists in container (group: $EXISTING_GROUP), keeping default GID 9001"
+      GROUP_ID=9001
+    else
+      SHOULD_CHANGE_GID=true
+    fi
+  fi
+
+  # Apply changes only if safe to do so
+  if [ "$SHOULD_CHANGE_UID" = true ]; then
     echo "Changing UID to $USER_ID"
     usermod -u "$USER_ID" user
   fi
-  
-  if [ "$GROUP_ID" != "9001" ]; then
+
+  if [ "$SHOULD_CHANGE_GID" = true ]; then
     echo "Changing GID to $GROUP_ID"
     groupmod -g "$GROUP_ID" guser
     usermod -g "$GROUP_ID" user
   fi
-  
-  chown -R user:guser /code /app
+
+  # Only chown if we actually made changes
+  if [ "$SHOULD_CHANGE_UID" = true ] || [ "$SHOULD_CHANGE_GID" = true ]; then
+    chown -R user:guser /code /app
+  fi
 fi
 
 # Handle MCP mode or regular commands
@@ -126,3 +155,4 @@ else
   # otherwise just drop you into an interactive login shell
   exec su-exec user bash --login
 fi
+
