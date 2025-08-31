@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.08
+FROM mascucsc/hagent-builder:2025.09
 
 USER user
 WORKDIR /code/workspace
@@ -7,8 +7,14 @@ WORKDIR /code/workspace
 ENV CVA6_HOME=/code/workspace/repo
 ENV DUT_ROOT=/code/workspace/repo
 
-# Clone only CVA6 with submodules
-RUN git clone --recursive https://github.com/openhwgroup/cva6.git repo
+# Clone only CVA6 with submodules at a specifc date
+RUN git clone --filter=blob:none --no-checkout https://github.com/openhwgroup/cva6.git repo && \
+  cd repo && \
+  BRANCH="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||')" && \
+  BRANCH="${BRANCH:-$(git remote show origin | sed -n 's/.*HEAD branch: //p')}" && \
+  git checkout "$(git rev-list -n 1 --before="2025-08-16" "$BRANCH")" && \
+  git submodule update --init --recursive --jobs 8
+
 COPY hagent.yaml /code/workspace/repo/
 
 WORKDIR /code/workspace/repo

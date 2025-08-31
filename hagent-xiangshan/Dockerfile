@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.08
+FROM mascucsc/hagent-builder:2025.09
 
 ENV NOOP_HOME=/code/workspace/repo
 ENV NEMU_HOME=/code/workspace/NEMU
@@ -6,8 +6,21 @@ ENV NEMU_HOME=/code/workspace/NEMU
 USER user
 WORKDIR /code/workspace
 
-RUN git clone --recursive https://github.com/OpenXiangShan/XiangShan.git repo
-RUN git clone --recursive https://github.com/OpenXiangShan/NEMU.git
+#RUN git clone --recursive https://github.com/OpenXiangShan/XiangShan.git repo
+RUN git clone --filter=blob:none --no-checkout https://github.com/OpenXiangShan/XiangShan.git repo && \
+  cd repo && \
+  BRANCH="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||')" && \
+  BRANCH="${BRANCH:-$(git remote show origin | sed -n 's/.*HEAD branch: //p')}" && \
+  git checkout "$(git rev-list -n 1 --before="2025-08-16" "$BRANCH")" && \
+  git submodule update --init --recursive --jobs 8
+
+#RUN git clone --recursive https://github.com/OpenXiangShan/NEMU.git
+RUN git clone --filter=blob:none --no-checkout https://github.com/OpenXiangShan/NEMU.git && \
+  cd NEMU && \
+  BRANCH="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD | sed 's|^origin/||')" && \
+  BRANCH="${BRANCH:-$(git remote show origin | sed -n 's/.*HEAD branch: //p')}" && \
+  git checkout "$(git rev-list -n 1 --before="2025-08-16" "$BRANCH")" && \
+  git submodule update --init --recursive --jobs 8
 
 # Copy patch file and hagent.yaml
 COPY xiangshan.patch /code/workspace/repo/
