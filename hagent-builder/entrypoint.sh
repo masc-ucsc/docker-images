@@ -1,158 +1,215 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
 
-# Function to start MCP servers -- Maybe FUTURE
-start_mcp_servers() {
-  echo "Starting MCP servers..." >&2
+# ---------------------------
+# Helpers (pure bash/posix)
+# ---------------------------
 
-  # Start hagent MCP server
+is_root() { [ "$(id -u)" = "0" ]; }
+
+have_cmd() { command -v "$1" >/dev/null 2>&1; }
+
+# Extract mount points (field 5) from /proc/self/mountinfo
+mountpoints_under() {
+  # $1: prefix dir (e.g., /code/workspace)
+  # Outputs absolute mountpoints whose path starts with the prefix (including the prefix itself).
+  awk -v pref="$1" '($5 ~ ("^" pref "(/|$)")) {print $5}' /proc/self/mountinfo 2>/dev/null || true
+}
+
+# True if there exists a mount strictly *inside* $1 (i.e., /dir/something, not /dir itself)
+has_nested_mounts() {
+  local base="$1"
+  local mp
+  while IFS= read -r mp; do
+    [ "$mp" = "$base" ] && continue
+    case "$mp" in
+    "$base"/*) return 0 ;;
+    esac
+  done < <(mountpoints_under "$base")
+  return 1
+}
+
+safe_chown_recursive_if_no_mounts() {
+  # $1: path, $2: user:group
+  local path="$1" ug="$2"
+  if has_nested_mounts "$path"; then
+    echo "INFO: Skipping recursive chown of $path (nested mounts detected)" >&2
+  else
+    echo "INFO: chown -R $ug $path" >&2
+    chown -R "$ug" "$path"
+  fi
+}
+
+start_mcp_servers() {
+  # Start optional MCP servers (non-root or root path). Keep minimal, trap PIDs if any are started.
+  echo "Starting MCP servers..." >&2
+  local pids=()
+
   if [ -f /opt/mcp-servers/hagent/index.js ]; then
     node /opt/mcp-servers/hagent/index.js &
-    HAGENT_PID=$!
-    echo "Started hagent MCP server (PID: $HAGENT_PID)" >&2
+    pids+=("$!")
+    echo "Started hagent MCP server (PID: ${pids[-1]})" >&2
   else
     echo "Warning: hagent MCP server not found" >&2
   fi
 
-  # Start filesystem MCP server with workspace access
   if [ -f /opt/mcp-servers/filesystem/index.js ]; then
     node /opt/mcp-servers/filesystem/index.js /workspace /code /app &
-    FS_PID=$!
-    echo "Started filesystem MCP server (PID: $FS_PID)" >&2
+    pids+=("$!")
+    echo "Started filesystem MCP server (PID: ${pids[-1]})" >&2
   else
     echo "Warning: filesystem MCP server not found" >&2
   fi
 
-  # Setup signal handlers to cleanup on exit
-  trap "kill $HAGENT_PID $FS_PID 2>/dev/null || true" EXIT INT TERM
-
-  # Wait for servers
-  wait $HAGENT_PID $FS_PID
+  # shellcheck disable=SC2064
+  trap "kill ${pids[*]:-} 2>/dev/null || true" EXIT INT TERM
+  if [ "${#pids[@]}" -gt 0 ]; then
+    echo "MCP servers running. Press Ctrl+C to stop." >&2
+    wait "${pids[@]}"
+  else
+    echo "No MCP servers started; exiting." >&2
+  fi
 }
 
-# Check if first argument is "mcp"
-if [ $# -gt 0 ] && [ "$1" = "mcp" ]; then
+# ---------------------------
+# Mode selection
+# ---------------------------
+
+MCP_MODE=false
+if [ $# -gt 0 ] && [ "${1:-}" = "mcp" ]; then
   MCP_MODE=true
-  shift # Remove "mcp" from arguments
-else
-  MCP_MODE=false
+  shift
 fi
 
-if [ "$(id -u)" != "0" ]; then
-  echo "Not running as root (UID: $(id -u)), skipping user setup"
+# ---------------------------
+# Non-root fast path
+# ---------------------------
 
-  if [ "$MCP_MODE" = true ]; then
-    # Run MCP servers as non-root user
+if ! is_root; then
+  echo "Not running as root (UID: $(id -u)), skipping user/group setup" >&2
+  if $MCP_MODE; then
+    # Run MCP servers in foreground as current user
     start_mcp_servers
   elif [ $# -gt 0 ]; then
-    # Just exec the command directly without su-exec
     exec bash --login -c "$*"
   else
     exec bash --login
   fi
 fi
 
-# su-exec must be present
-command -v su-exec >/dev/null ||
-  {
-    echo "ERROR: su-exec not found"
-    exit 1
-  }
+# ---------------------------
+# Root path: prerequisites
+# ---------------------------
 
-# bash must be present
-command -v bash >/dev/null ||
-  {
-    echo "ERROR: bash not found"
-    exit 1
-  }
+have_cmd su-exec || {
+  echo "ERROR: su-exec not found"
+  exit 1
+}
+have_cmd bash || {
+  echo "ERROR: bash not found"
+  exit 1
+}
 
-# ——————————————————————————————————————————————————————
-# Create the unprivileged user "user" with a fixed UID if needed
-# ——————————————————————————————————————————————————————
+# ---------------------------
+# Target IDs (defaults)
+# ---------------------------
 
-USER_ID=${LOCAL_USER_ID:-9001}
-GROUP_ID=${LOCAL_GROUP_ID:-9001}
+USER_NAME="user"   # existing unprivileged user baked in the image
+GROUP_NAME="guser" # existing group baked in the image
 
-# FIXED: Check for UID/GID conflicts before attempting to modify
-if [ "$USER_ID" != "9001" ] || [ "$GROUP_ID" != "9001" ]; then
-  SHOULD_CHANGE_UID=false
-  SHOULD_CHANGE_GID=false
+TARGET_UID="${LOCAL_USER_ID:-9001}"
+TARGET_GID="${LOCAL_GROUP_ID:-9001}"
 
-  # Check if we should change UID
-  if [ "$USER_ID" != "9001" ]; then
-    if getent passwd "$USER_ID" >/dev/null 2>&1; then
-      echo "WARNING: UID $USER_ID already exists in container, keeping default UID 9001"
-      USER_ID=9001
-    else
-      SHOULD_CHANGE_UID=true
-    fi
-  fi
+# ---------------------------
+# Resolve group: reuse if GID exists, else retag GROUP_NAME
+# ---------------------------
 
-  # Check if we should change GID
-  if [ "$GROUP_ID" != "9001" ]; then
-    if getent group "$GROUP_ID" >/dev/null 2>&1; then
-      EXISTING_GROUP=$(getent group "$GROUP_ID" | cut -d: -f1)
-      echo "WARNING: GID $GROUP_ID already exists in container (group: $EXISTING_GROUP), keeping default GID 9001"
-      GROUP_ID=9001
-    else
-      SHOULD_CHANGE_GID=true
-    fi
-  fi
-
-  # Apply changes only if safe to do so
-  if [ "$SHOULD_CHANGE_UID" = true ]; then
-    echo "Changing UID to $USER_ID"
-    usermod -u "$USER_ID" user
-  fi
-
-  if [ "$SHOULD_CHANGE_GID" = true ]; then
-    echo "Changing GID to $GROUP_ID"
-    groupmod -g "$GROUP_ID" guser
-    usermod -g "$GROUP_ID" user
-  fi
-
-  # Only chown if we actually made changes
-  if [ "$SHOULD_CHANGE_UID" = true ] || [ "$SHOULD_CHANGE_GID" = true ]; then
-    chown -R user:guser /code /app
-  fi
-fi
-
-# Handle MCP mode or regular commands
-if [ "$MCP_MODE" = true ]; then
-  # Run MCP servers as the unprivileged user
-  exec su-exec user bash --login -c "
-    echo 'Starting MCP servers as user (UID: \$(id -u))...' >&2
-
-    # Export any needed environment variables
-    export HAGENT_CONFIG_PATH=\${HAGENT_CONFIG_PATH:-/workspace/hagent.yaml}
-    export NODE_ENV=production
-
-    # Start hagent MCP server
-    if [ -f /opt/mcp-servers/hagent/index.js ]; then
-      node /opt/mcp-servers/hagent/index.js &
-      HAGENT_PID=\$!
-      echo \"Started hagent MCP server (PID: \$HAGENT_PID)\" >&2
-    fi
-
-    # Start filesystem MCP server
-    if [ -f /opt/mcp-servers/filesystem/index.js ]; then
-      node /opt/mcp-servers/filesystem/index.js /workspace /code /app &
-      FS_PID=\$!
-      echo \"Started filesystem MCP server (PID: \$FS_PID)\" >&2
-    fi
-
-    # Setup cleanup
-    trap 'kill \$HAGENT_PID \$FS_PID 2>/dev/null || true' EXIT INT TERM
-
-    # Wait for servers
-    echo 'MCP servers running. Press Ctrl+C to stop.' >&2
-    wait \$HAGENT_PID \$FS_PID
-  "
-elif [ $# -gt 0 ]; then
-  # If the container was given a command, pass it to `bash -c …`
-  exec su-exec user bash --login -c "$*"
+EXISTING_GROUP_NAME=""
+if getent group "$TARGET_GID" >/dev/null 2>&1; then
+  # If a group already uses TARGET_GID, reuse it (do not create/retag another).
+  EXISTING_GROUP_NAME="$(getent group "$TARGET_GID" | cut -d: -f1)"
+  echo "INFO: Reusing existing group GID=$TARGET_GID ($EXISTING_GROUP_NAME)" >&2
+  # Make it the primary group for USER_NAME.
+  usermod -g "$EXISTING_GROUP_NAME" "$USER_NAME"
 else
-  # otherwise just drop you into an interactive login shell
-  exec su-exec user bash --login
+  # No conflict; set primary group to TARGET_GID by retagging GROUP_NAME.
+  if [ "$TARGET_GID" != "$(getent group "$GROUP_NAME" | cut -d: -f3)" ]; then
+    echo "INFO: Setting $GROUP_NAME GID -> $TARGET_GID" >&2
+    groupmod -g "$TARGET_GID" "$GROUP_NAME"
+  fi
+  EXISTING_GROUP_NAME="$GROUP_NAME"
 fi
 
+# ---------------------------
+# Resolve user
+# ---------------------------
+
+CURRENT_UID="$(id -u "$USER_NAME")"
+if [ "$CURRENT_UID" != "$TARGET_UID" ]; then
+  # -o allows multiple users with same UID
+  usermod -o -u "$TARGET_UID" "$USER_NAME"
+fi
+
+# Make primary group consistent (if we reused a foreign group, ensure primary reflects it)
+PRIMARY_GID_FOR_USER="$(id -g "$USER_NAME")"
+TARGET_PRIMARY_GID="$(getent group "$EXISTING_GROUP_NAME" | cut -d: -f3)"
+if [ "$PRIMARY_GID_FOR_USER" != "$TARGET_PRIMARY_GID" ]; then
+  usermod -g "$EXISTING_GROUP_NAME" "$USER_NAME"
+fi
+
+# ---------------------------
+# Ownership adjustments (principled)
+# ---------------------------
+
+# 1) /app: recursive chown ONLY if there are no nested mounts inside /app
+if [ -d /app ]; then
+  safe_chown_recursive_if_no_mounts "/app" "${USER_NAME}:${EXISTING_GROUP_NAME}"
+fi
+if [ -d /code ]; then
+  safe_chown_recursive_if_no_mounts "/code" "${USER_NAME}:${EXISTING_GROUP_NAME}"
+fi
+
+# Optional quality-of-life: ensure /code and /workspace (if present) bases are owned (non-recursive)
+for d in /workspace /workspace/*; do
+  if [ -d "$d" ]; then
+    echo "INFO: chown $USER_NAME:$EXISTING_GROUP_NAME $d" >&2
+    chown "$USER_NAME:$EXISTING_GROUP_NAME" "$d"
+  fi
+done
+
+# ---------------------------
+# Execute requested mode/command
+# ---------------------------
+
+if $MCP_MODE; then
+  # Run MCP servers as the unprivileged user
+  exec su-exec "$USER_NAME" bash --login -c '
+    set -euo pipefail
+    export HAGENT_CONFIG_PATH="${HAGENT_CONFIG_PATH:-/workspace/hagent.yaml}"
+    export NODE_ENV=production
+    pids=()
+
+    if [ -f /opt/mcp-servers/hagent/index.js ]; then
+      node /opt/mcp-servers/hagent/index.js & pids+=("$!")
+      echo "Started hagent MCP server (PID: ${pids[-1]})" >&2
+    fi
+
+    if [ -f /opt/mcp-servers/filesystem/index.js ]; then
+      node /opt/mcp-servers/filesystem/index.js /workspace /code /app & pids+=("$!")
+      echo "Started filesystem MCP server (PID: ${pids[-1]})" >&2
+    fi
+
+    trap "kill ${pids[*]:-} 2>/dev/null || true" EXIT INT TERM
+    if [ "${#pids[@]}" -gt 0 ]; then
+      echo "MCP servers running. Press Ctrl+C to stop." >&2
+      wait "${pids[@]}"
+    else
+      echo "No MCP servers started; exiting." >&2
+    fi
+  '
+elif [ $# -gt 0 ]; then
+  exec su-exec "$USER_NAME" bash --login -c "$*"
+else
+  exec su-exec "$USER_NAME" bash --login
+fi
