@@ -35,6 +35,7 @@ safe_chown_recursive_if_no_mounts() {
   local path="$1" ug="$2"
   if has_nested_mounts "$path"; then
     echo "INFO: Skipping recursive chown of $path (nested mounts detected)" >&2
+    chown "$ug" "$path"
   else
     echo "INFO: chown -R $ug $path" >&2
     chown -R "$ug" "$path"
@@ -141,16 +142,6 @@ else
   EXISTING_GROUP_NAME="$GROUP_NAME"
 fi
 
-# ---------------------------
-# Resolve user
-# ---------------------------
-
-CURRENT_UID="$(id -u "$USER_NAME")"
-if [ "$CURRENT_UID" != "$TARGET_UID" ]; then
-  # -o allows multiple users with same UID
-  usermod -o -u "$TARGET_UID" "$USER_NAME"
-fi
-
 # Make primary group consistent (if we reused a foreign group, ensure primary reflects it)
 PRIMARY_GID_FOR_USER="$(id -g "$USER_NAME")"
 TARGET_PRIMARY_GID="$(getent group "$EXISTING_GROUP_NAME" | cut -d: -f3)"
@@ -159,24 +150,29 @@ if [ "$PRIMARY_GID_FOR_USER" != "$TARGET_PRIMARY_GID" ]; then
 fi
 
 # ---------------------------
-# Ownership adjustments (principled)
+# Resolve user
 # ---------------------------
 
-# 1) /app: recursive chown ONLY if there are no nested mounts inside /app
-if [ -d /app ]; then
-  safe_chown_recursive_if_no_mounts "/app" "${USER_NAME}:${EXISTING_GROUP_NAME}"
-fi
-if [ -d /code ]; then
-  safe_chown_recursive_if_no_mounts "/code" "${USER_NAME}:${EXISTING_GROUP_NAME}"
-fi
+CURRENT_UID="$(id -u "$USER_NAME")"
+if [ "$CURRENT_UID" != "$TARGET_UID" ]; then
+  # -o allows multiple users with same UID
+  usermod -o -u "$TARGET_UID" "$USER_NAME"
 
-# Optional quality-of-life: ensure /code and /workspace (if present) bases are owned (non-recursive)
-for d in /workspace /workspace/*; do
-  if [ -d "$d" ]; then
-    echo "INFO: chown $USER_NAME:$EXISTING_GROUP_NAME $d" >&2
-    chown "$USER_NAME:$EXISTING_GROUP_NAME" "$d"
+  # Update the homedirectory to new ID
+  safe_chown_recursive_if_no_mounts "/home/user" "${USER_NAME}:${EXISTING_GROUP_NAME}"
+
+  # 1) /app: recursive chown ONLY if there are no nested mounts inside /app
+  if [ -d /app ]; then
+    safe_chown_recursive_if_no_mounts "/app" "${USER_NAME}:${EXISTING_GROUP_NAME}"
   fi
-done
+
+  # Optional quality-of-life: ensure /code and /workspace (if present) bases are owned (non-recursive)
+  for d in /code/workspace/*; do
+    if [ -d "$d" ]; then
+      safe_chown_recursive_if_no_mounts "$d" "${USER_NAME}:${EXISTING_GROUP_NAME}"
+    fi
+  done
+fi
 
 # ---------------------------
 # Execute requested mode/command
