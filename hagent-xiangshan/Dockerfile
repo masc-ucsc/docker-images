@@ -1,9 +1,9 @@
-FROM mascucsc/hagent-builder:2025.09
+FROM mascucsc/hagent-builder:2025.09r
 
 ENV NOOP_HOME=/code/workspace/repo
 ENV NEMU_HOME=/code/workspace/NEMU
 
-USER user
+#USER user
 WORKDIR /code/workspace
 
 #RUN git clone --recursive https://github.com/OpenXiangShan/XiangShan.git repo

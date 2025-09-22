@@ -103,7 +103,7 @@ COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod 755 /usr/local/bin/entrypoint.sh
 
 # default working directory
-RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers /code/workspace
+RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers /code/workspace /code/hagent
 
 # Create mountpoints in workspace
 RUN mkdir -p /code/workspace/cache /code/workspace/build /code/workspace/repo /code/workspace/tech
@@ -121,12 +121,13 @@ RUN mkdir -p /code/workspace/cache /code/workspace/build /code/workspace/repo /c
 #RUN cd /code/mcp-servers/filesystem && npm install
 
 # Create default user with UID 9001 in Dockerfile
-RUN groupadd -g 9001 guser && \
-    useradd --create-home --shell /bin/bash --uid 9001 --gid guser user && \
-    echo "user:user" | chpasswd && \
-    echo "user ALL=(ALL) ALL" >> /etc/sudoers
-
-# set ownership in Dockerfile
-RUN chown -R user:guser /code /app
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+#
+# RUN groupadd -g 9001 guser && \
+#     useradd --create-home --shell /bin/bash --uid 9001 --gid guser user && \
+#     echo "user:user" | chpasswd && \
+#     echo "user ALL=(ALL) ALL" >> /etc/sudoers
+#
+# # set ownership in Dockerfile
+# RUN chown -R user:guser /code /app
+#
+# ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

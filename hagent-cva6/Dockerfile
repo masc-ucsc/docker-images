@@ -1,6 +1,6 @@
-FROM mascucsc/hagent-builder:2025.09
+FROM mascucsc/hagent-builder:2025.09r
 
-USER user
+#USER user
 WORKDIR /code/workspace
 
 # Set environment variable for CVA6 RTL path
