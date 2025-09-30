@@ -1,0 +1,35 @@
+profiles:
+  - name: soomrv_verilator
+    description: "Build SoomRV processor with Verilator simulation"
+    memory: 8
+    configuration:
+      source: "track_repo_dir('src', ext='.sv')"
+      source: "track_repo_dir('hardfloat', ext='.v')"
+      output: "track_build_dir('obj_dir')"
+      environment:
+        SOOMRV_HOME: "/code/workspace/repo"
+    apis:
+      - name: setup
+        description: "Setup SoomRV submodules"
+        command: "make setup"
+        cwd: "$HAGENT_REPO_DIR"
+      - name: build
+        description: "Build SoomRV Verilator simulation binary"
+        command: "make"
+        cwd: "$HAGENT_REPO_DIR"
+      - name: build_with_trace
+        description: "Build SoomRV with VCD trace support"
+        command: "make trace"
+        cwd: "$HAGENT_REPO_DIR"
+      - name: isa_tests
+        description: "Run quick ISA test suite (assembly tests only)"
+        command: "./run_isa_tests.sh"
+        cwd: "$HAGENT_REPO_DIR"
+      - name: full_regression
+        description: "Run complete regression test suite (all tests)"
+        command: "./run_regression.sh"
+        cwd: "$HAGENT_REPO_DIR"
+      - name: single_test
+        description: "Run single Dhrystone test as example"
+        command: "./obj_dir/VTop test_programs/dhry_1.s --perfc"
+        cwd: "$HAGENT_REPO_DIR"
