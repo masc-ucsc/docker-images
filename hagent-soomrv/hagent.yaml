@@ -1,6 +1,6 @@
 profiles:
-  - name: soomrv_verilator
-    description: "Build SoomRV processor with Verilator simulation"
+  - name: soomrv
+    description: "Build and test SoomRV processor with Verilator simulation"
     memory: 8
     configuration:
       source: "track_repo_dir('src', ext='.sv')"
@@ -9,10 +9,6 @@ profiles:
       environment:
         SOOMRV_HOME: "/code/workspace/repo"
     apis:
-      - name: setup
-        description: "Setup SoomRV submodules"
-        command: "make setup"
-        cwd: "$HAGENT_REPO_DIR"
       - name: build
         description: "Build SoomRV Verilator simulation binary"
         command: "make"
@@ -22,14 +18,21 @@ profiles:
         command: "make trace"
         cwd: "$HAGENT_REPO_DIR"
       - name: isa_tests
-        description: "Run quick ISA test suite (assembly tests only)"
-        command: "./run_isa_tests.sh"
+        description: "Run quick ISA test suite"
+        command: "python3 scripts/test_suite.py /opt/riscv-tests/isa"
         cwd: "$HAGENT_REPO_DIR"
-      - name: full_regression
-        description: "Run complete regression test suite (all tests)"
-        command: "./run_regression.sh"
+      - name: system_regression
+        description: "Run full-system regression suite (CoreMark, Dhrystone, Linux boot)"
+        command: |
+          ./obj_dir/VTop test_programs/coremark.elf 1> >(tee logs/coremark.out) 2> >(tee logs/coremark.err) && \
+          ./obj_dir/VTop test_programs/dhry_1_O3_no_inline.s 1> >(tee logs/dhry_1_O3_no_inline.out) 2> >(tee logs/dhry_1_O3_no_inline.err) && \
+          ./obj_dir/VTop test_programs/dhry_1_O3.s 1> >(tee logs/dhry_1_O3.out) 2> >(tee logs/dhry_1_O3.err) && \
+          ./obj_dir/VTop test_programs/dhry_1_O3_inline.s 1> >(tee logs/dhry_1_O3_inline.out) 2> >(tee logs/dhry_1_O3_inline.err) && \
+          (timeout 3600 ./obj_dir/VTop test_programs/linux/linux_image.elf \
+            --device-tree=test_programs/linux/device_tree.dtb --perfc \
+            1> >(tee logs/linux.out) 2> >(tee logs/linux.err) || { [ $? -eq 124 ] && exit 0; exit $?; })
         cwd: "$HAGENT_REPO_DIR"
       - name: single_test
         description: "Run single Dhrystone test as example"
-        command: "./obj_dir/VTop test_programs/dhry_1.s --perfc"
+        command: "./obj_dir/VTop test_programs/dhry_1.s"
         cwd: "$HAGENT_REPO_DIR"

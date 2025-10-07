@@ -1,0 +1,12 @@
+diff --git a/Makefile b/Makefile
+index 5ff0dca..b1647af 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERILATOR_FLAGS = \
+ 	--cc --build --threads 4 --unroll-stmts 999999 -unroll-count 999999 --assert -Wall -Wno-BLKSEQ -Wno-UNUSED \
+-	-Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-ENUMVALUE -Wno-GENUNNAMED -O3 -sv \
++	-Wno-PINCONNECTEMPTY -Wno-DECLFILENAME -Wno-ENUMVALUE -Wno-GENUNNAMED --Wno-PROCASSINIT -O3 -sv \
+ 	$(VFLAGS) \
+ 	-CFLAGS "-std=c++17 -march=native" \
+ 	-LDFLAGS "-ldl" \
