@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.09r
+FROM mascucsc/hagent-builder:2025.10
 
 WORKDIR /code/workspace
 
@@ -8,9 +8,8 @@ ENV DUT_ROOT=/code/workspace/repo
 
 # Install additional dependencies for SoomRV
 RUN apt-get update && apt-get install -y \
-    verilator \
     device-tree-compiler \
-    autoconf automake autotools-dev curl python3 python3-pip python3-tomli \
+    autoconf automake autotools-dev python3 python3-pip python3-tomli \
     libmpc-dev libmpfr-dev libgmp-dev gawk build-essential bison flex \
     texinfo gperf libtool patchutils bc zlib1g-dev libexpat-dev \
     ninja-build git cmake libglib2.0-dev libslirp-dev \

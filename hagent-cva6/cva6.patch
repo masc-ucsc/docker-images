@@ -1,0 +1,13 @@
+diff --git a/core/cva6_mmu/cva6_shared_tlb.sv b/core/cva6_mmu/cva6_shared_tlb.sv
+index 9a774ee7..28d7a6ad 100644
+--- a/core/cva6_mmu/cva6_shared_tlb.sv
++++ b/core/cva6_mmu/cva6_shared_tlb.sv
+@@ -146,7 +146,7 @@ module cva6_shared_tlb #(
+   logic itlb_req_d, itlb_req_q;
+   logic dtlb_req_d, dtlb_req_q;
+
+-  int i_req_d, i_req_q;
++  logic i_req_d, i_req_q;
+
+   logic [1:0][2:0] v_st_enbl;
+

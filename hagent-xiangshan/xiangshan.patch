@@ -266,7 +266,7 @@ index 24a0ff45..c365e4d8 100644
  
  ifeq ($(VCS),verilator)
 -VCS_FLAGS += --exe --cc --main --top-module $(VCS_TOP) -Wno-WIDTH --max-num-width 150000
-+VCS_FLAGS += --exe --cc --main --top-module $(VCS_TOP) -Wno-WIDTH -Wno-BADVLTPRAGMA --max-num-width 150000
++VCS_FLAGS += --exe --cc --main --top-module $(VCS_TOP) -Wno-WIDTH -Wno-BADSTDPRAGMA --max-num-width 150000
  VCS_FLAGS += --instr-count-dpi 1 --timing +define+VERILATOR_5
  VCS_FLAGS += -Mdir $(VCS_BUILD_DIR)  --compiler gcc
  VCS_CXXFLAGS += -std=c++20
@@ -278,7 +278,7 @@ index ec42902c..7ec89e74 100644
    +define+RANDOMIZE_GARBAGE_ASSIGN  \
    +define+RANDOMIZE_DELAY=0         \
    -Wno-STMTDLY -Wno-WIDTH           \
-+	-Wno-BADVLTPRAGMA                 \
++	-Wno-BADSTDPRAGMA                 \
    --max-num-width 150000            \
    --assert --x-assign unique        \
    --output-split 30000              \

@@ -1,9 +1,11 @@
-FROM mascucsc/hagent-builder:2025.09r
+FROM mascucsc/hagent-builder:2025.10
 
 ENV NOOP_HOME=/code/workspace/repo
 ENV NEMU_HOME=/code/workspace/NEMU
 
-#USER user
+RUN curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/0.13.0-M0/mill -o /usr/local/bin/mill && \
+    chmod 755 /usr/local/bin/mill
+
 WORKDIR /code/workspace
 
 #RUN git clone --recursive https://github.com/OpenXiangShan/XiangShan.git repo

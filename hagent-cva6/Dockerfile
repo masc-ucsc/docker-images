@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.09r
+FROM mascucsc/hagent-builder:2025.10
 
 #USER user
 WORKDIR /code/workspace
@@ -15,9 +15,14 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/openhwgroup/cv
   git checkout "$(git rev-list -n 1 --before="2025-08-16" "$BRANCH")" && \
   git submodule update --init --recursive --jobs 8
 
+# Copy patch file and hagent.yaml
+COPY cva6.patch /code/workspace/repo/
 COPY hagent.yaml /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
+
+# Apply the patch
+RUN patch -p1 < cva6.patch
 
 # This is the default config for CVA6, not set to allow many
 run touch /code/workspace/repo/core/include/_config_pkg.sv

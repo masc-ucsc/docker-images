@@ -27,6 +27,7 @@ RUN apt-get update && \
       python3-dev \
       python3-markupsafe \
       python3-poetry \
+      software-properties-common \
       ruby \
       tclcl-dev \
       gawk \
@@ -43,6 +44,10 @@ RUN apt-get update && \
       libboost-all-dev && \
     ln -snf /usr/share/zoneinfo/America/Los_Angeles /etc/localtime && \
     echo "America/Los_Angeles" > /etc/timezone
+
+# Packages needed for openroad
+RUN add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt-get install -y python3.10 python3.10-venv python3.10-dev libqt5gui5t64 libqt5charts5 tcl-tclreadline
 
 # install bazelisk (symlinked to bazel for compatibility)
 RUN curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/bazelisk-linux-amd64 \
@@ -62,28 +67,20 @@ RUN curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.s
 RUN echo 'export PATH='"$CONDA_DIR"'/bin:$PATH' > /etc/profile.d/conda.sh
 
 # install OSS-CAD suite
-ENV OSS_CAD_DIR=/usr/local/oss-cad-suite
-
-RUN curl -L https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-06-30/oss-cad-suite-linux-x64-20250630.tgz \
-      -o /tmp/oss-cad-suite.tgz && \
-    mkdir -p "$OSS_CAD_DIR" && \
-    tar xzf /tmp/oss-cad-suite.tgz -C /usr/local && \
-    rm /tmp/oss-cad-suite.tgz && \
-    echo "source $OSS_CAD_DIR/environment" > /etc/profile.d/oss_cad.sh
+# ENV OSS_CAD_DIR=/usr/local/oss-cad-suite
+#
+# RUN curl -L https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2025-06-30/oss-cad-suite-linux-x64-20250630.tgz \
+#       -o /tmp/oss-cad-suite.tgz && \
+#     mkdir -p "$OSS_CAD_DIR" && \
+#     tar xzf /tmp/oss-cad-suite.tgz -C /usr/local && \
+#     rm /tmp/oss-cad-suite.tgz && \
+#     echo "source $OSS_CAD_DIR/environment" > /etc/profile.d/oss_cad.sh
 
 # chisel
-RUN curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/0.13.0-M0/mill -o /usr/local/bin/mill && \
-    chmod 755 /usr/local/bin/mill
-RUN apt-get install -y g++-riscv64-linux-gnu openjdk-11-jre flex bison autoconf
-RUN apt-get install -y sqlite3 libsqlite3-dev libzstd-dev libreadline6-dev libsdl2-dev zlib1g-dev
-
-
-# build and install su-exec for dropping privileges
-RUN git clone https://github.com/ncopa/su-exec.git /tmp/su-exec && \
-    make -C /tmp/su-exec && \
-    cp /tmp/su-exec/su-exec /usr/local/bin/ && \
-    rm -rf /tmp/su-exec
-
+# RUN curl -L https://repo1.maven.org/maven2/com/lihaoyi/mill-dist/0.13.0-M0/mill -o /usr/local/bin/mill && \
+#     chmod 755 /usr/local/bin/mill
+# RUN apt-get install -y g++-riscv64-linux-gnu openjdk-11-jre
+RUN apt-get install -y openjdk-17-jre
 
 RUN git clone https://github.com/MikePopoloski/slang.git /tmp/slang &&\
   cd /tmp/slang && \
@@ -93,10 +90,33 @@ RUN git clone https://github.com/MikePopoloski/slang.git /tmp/slang &&\
   make install && \
   rm -rf /tmp/slang
 
+RUN apt-get install -y flex bison autoconf sqlite3 libsqlite3-dev libzstd-dev libreadline6-dev libsdl2-dev zlib1g-dev
+
+RUN curl -L -o /tmp/yosys.tar.gz https://github.com/YosysHQ/yosys/releases/download/v0.57/yosys.tar.gz &&\
+  mkdir /tmp/yosys && \
+  cd /tmp/yosys && \
+  tar xzf ../yosys.tar.gz && \
+  make config-gcc && \
+  make -j 16 && \
+  make install && \
+  rm -rf /tmp/yosys*
+
+RUN git clone --recursive https://github.com/povik/yosys-slang /tmp/yosys-slang && \
+  cd /tmp/yosys-slang/build && \
+  cmake .. && \
+  make -j 16 && \
+  make install && \
+  rm -rf /tmp/yosys-slang
+
+RUN curl -L -o /tmp/openroad.deb https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb && \
+  dpkg -i /tmp/openroad.deb && \
+  rm -f /tmp/openroad.deb
+
+# Verilog simulation common tools (icarus too?)
+RUN apt-get install -y verilator iverilog
 
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
-
 
 # copy entrypoint and make executable
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
