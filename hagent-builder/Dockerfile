@@ -113,7 +113,11 @@ RUN curl -L -o /tmp/openroad.deb https://github.com/Precision-Innovations/OpenRO
   rm -f /tmp/openroad.deb
 
 # Verilog simulation common tools (icarus too?)
-RUN apt-get install -y verilator iverilog
+# We build verilator manually as Xiangshan needs v5.040
+COPY install-verilator.sh /tmp/install-verilator.sh
+RUN bash /tmp/install-verilator.sh && rm -rf /tmp/verilator
+
+RUN apt-get install -y iverilog
 
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
