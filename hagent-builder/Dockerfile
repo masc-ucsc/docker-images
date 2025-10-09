@@ -55,16 +55,16 @@ RUN curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/baze
     chmod 755 /usr/local/bin/bazel
 
 # install Miniconda3
-ENV CONDA_DIR=/usr/local/miniconda3
-ENV PATH="$CONDA_DIR/bin:$PATH"
+#ENV CONDA_DIR=/usr/local/miniconda3
+#ENV PATH="$CONDA_DIR/bin:$PATH"
 
-RUN curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
-      -o /tmp/miniconda.sh && \
-    bash /tmp/miniconda.sh -b -p "$CONDA_DIR" && \
-    rm /tmp/miniconda.sh
+# RUN curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh \
+#       -o /tmp/miniconda.sh && \
+#     bash /tmp/miniconda.sh -b -p "$CONDA_DIR" && \
+#     rm /tmp/miniconda.sh
 
 # ensure conda is on PATH for interactive shells
-RUN echo 'export PATH='"$CONDA_DIR"'/bin:$PATH' > /etc/profile.d/conda.sh
+#RUN echo 'export PATH='"$CONDA_DIR"'/bin:$PATH' > /etc/profile.d/conda.sh
 
 # install OSS-CAD suite
 # ENV OSS_CAD_DIR=/usr/local/oss-cad-suite
@@ -108,9 +108,26 @@ RUN git clone --recursive https://github.com/povik/yosys-slang /tmp/yosys-slang 
   make install && \
   rm -rf /tmp/yosys-slang
 
-RUN curl -L -o /tmp/openroad.deb https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb && \
-  dpkg -i /tmp/openroad.deb && \
-  rm -f /tmp/openroad.deb
+RUN git clone --recursive https://github.com/The-OpenROAD-Project/OpenROAD.git /tmp/openroad && \
+  cd /tmp/openroad && \
+  ./etc/DependencyInstaller.sh -base && \
+  ./etc/DependencyInstaller.sh -common && \
+  ./etc/Build.sh -no-tests && \
+  cd build && \
+  make install && \
+  rm -rf /tmp/openroad
+
+# bazel option for openroad, but binaries still fail
+# bazel build -c opt --dynamic_mode=off --features=-supports_dynamic_linker //:openroad && \
+# bazel build -c opt --dynamic_mode=off --features=-supports_dynamic_linker //src/sta:opensta  && \
+# cp ./bazel-bin/src/sta/opensta /usr/local/bin/ && \
+# cp ./bazel-bin/openroad /usr/local/bin/ && \
+# bazel clean --expunge && \
+
+# Current version seg-faults with CVA6 netlist
+#RUN curl -L -o /tmp/openroad.deb https://github.com/Precision-Innovations/OpenROAD/releases/download/2024-12-14/openroad_2.0-17598-ga008522d8_amd64-ubuntu-22.04.deb && \
+#  dpkg -i /tmp/openroad.deb && \
+#  rm -f /tmp/openroad.deb
 
 # Verilog simulation common tools (icarus too?)
 # We build verilator manually as Xiangshan needs v5.040
