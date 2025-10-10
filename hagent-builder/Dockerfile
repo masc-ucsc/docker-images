@@ -67,6 +67,9 @@ RUN bash /tmp/install-verilator.sh && rm -rf /tmp/verilator /tmp/install-verilat
 
 RUN apt-get install -y iverilog
 
+# UV used by hagent
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
 
