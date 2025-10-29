@@ -1,0 +1,76 @@
+diff --git a/sim/slang/slang.hpp b/sim/slang/slang.hpp
+index fe43973..56f327a 100644
+--- a/sim/slang/slang.hpp
++++ b/sim/slang/slang.hpp
+@@ -45,7 +45,6 @@ namespace  {
+                 case 10: type = Type::FU_ATOMIC; break;
+                 case 11: type = Type::FU_CSR; break;
+                 case 12: type = Type::FU_TRAP; break;
+-                default: throw std::runtime_error("Can not create FuncUnit from provided value");
+             }
+         }
+ 
+@@ -126,7 +125,6 @@ namespace  {
+                 case 13: type = Type::FLAGS_ST_PF; break;
+                 case 14: type = Type::FLAGS_XRET; break;
+                 case 15: type = Type::FLAGS_NX; break;
+-                default: throw std::runtime_error("Can not create Flags from provided value");
+             }
+         }
+ 
+@@ -186,7 +184,6 @@ namespace  {
+                 case 1: type = Type::IF_INTERRUPT; break;
+                 case 2: type = Type::IF_ACCESS_FAULT; break;
+                 case 3: type = Type::IF_PAGE_FAULT; break;
+-                default: throw std::runtime_error("Can not create IFetchFault from provided value");
+             }
+         }
+ 
+@@ -238,7 +235,6 @@ namespace  {
+                 case 3: type = Type::FLUSH_RETURN; break;
+                 case 4: type = Type::FLUSH_IBRANCH; break;
+                 case 5: type = Type::FLUSH_MEM_ORDER; break;
+-                default: throw std::runtime_error("Can not create FlushCause from provided value");
+             }
+         }
+ 
+@@ -300,7 +296,6 @@ namespace  {
+                 case 7: type = Type::MEMC_WRITE_BYTE; break;
+                 case 8: type = Type::MEMC_WRITE_HALF; break;
+                 case 9: type = Type::MEMC_WRITE_WORD; break;
+-                default: throw std::runtime_error("Can not create MemC_Cmd from provided value");
+             }
+         }
+ 
+@@ -694,7 +689,6 @@ namespace  {
+                 case 1: type = Type::BT_CALL; break;
+                 case 2: type = Type::BT_BRANCH; break;
+                 case 3: type = Type::BT_RETURN; break;
+-                default: throw std::runtime_error("Can not create BranchType from provided value");
+             }
+         }
+ 
+@@ -905,7 +899,6 @@ namespace  {
+                 case 0: type = Type::RET_NONE; break;
+                 case 1: type = Type::RET_PUSH; break;
+                 case 2: type = Type::RET_POP; break;
+-                default: throw std::runtime_error("Can not create RetStackAction from provided value");
+             }
+         }
+ 
+@@ -954,7 +947,6 @@ namespace  {
+                 case 2: type = Type::HIST_APPEND_1; break;
+                 case 3: type = Type::HIST_WRITE_0; break;
+                 case 4: type = Type::HIST_WRITE_1; break;
+-                default: throw std::runtime_error("Can not create HistoryAction from provided value");
+             }
+         }
+ 
+@@ -1003,7 +995,6 @@ namespace  {
+                 case 1: type = Type::BR_TGT_NEXT; break;
+                 case 2: type = Type::BR_TGT_CUR16; break;
+                 case 3: type = Type::BR_TGT_CUR32; break;
+-                default: throw std::runtime_error("Can not create BranchTargetSpec from provided value");
+             }
+         }
+ 

@@ -1,0 +1,616 @@
+diff --git a/src/BranchHandler.sv b/src/BranchHandler.sv
+index deb81c5..a4b7d26 100644
+--- a/src/BranchHandler.sv
++++ b/src/BranchHandler.sv
+@@ -126,13 +126,15 @@ typedef struct packed
+ Branch branch[NUM_INST-1:0];
+ 
+ always_comb begin
++    logic [15:0] i16 = '0;
++    logic[31:0] i32 = '0;
+ 
+     for (integer i = 0; i < NUM_INST; i=i+1)
+         branch[i] = Branch'{valid: 0, default: 'x};
+ 
+     for (integer i = 0; i < NUM_INST; i=i+1) begin
+         if (is16bit[i+1]) begin
+-            logic[15:0] i16 = instrsView[i+1];
++            i16 = instrsView[i+1];
+             unique casez (i16)
+                 16'b001???????????01, // c.jal
+                 16'b101???????????01: begin // c.j
+@@ -175,7 +177,7 @@ always_comb begin
+ 
+     for (integer i = 0; i < NUM_INST; i=i+1) begin
+         if (is32bit[i]) begin
+-            logic[31:0] i32 = {instrsView[i+1], instrsView[i]};
++            i32 = {instrsView[i+1], instrsView[i]};
+             unique casez (i32)
+                 32'b????????????????????_?????_1101111: begin // jal
+                     branch[i].valid = 1;
+@@ -254,6 +256,10 @@ always_ff@(posedge clk) begin
+ end
+ 
+ always_comb begin
++    logic predIllegal = 0;
++    FetchOff_t actualOffs = '0;
++    reg dirOnly = 0;
++    reg dirOnlyTaken = 0;
+ 
+     decBranch_c = FetchBranchProv'{taken: 0, default: 'x};
+     btUpdate_c = BTUpdate'{valid: 0, default: 'x};
+@@ -301,7 +307,7 @@ always_comb begin
+                 // halfword of a 32-bit instruction.
+                 // Legal predictions are always in the final halfword, such that the entire
+                 // 32-bit instruction can be fetched before the prediction is made.
+-                logic predIllegal = is32bit[IN_op.predBr.offs + ($bits(FetchOff_t)+1)'(1)];
++                predIllegal = is32bit[IN_op.predBr.offs + ($bits(FetchOff_t)+1)'(1)];
+ 
+                 // Delete matching regular branch prediction entries
+                 btUpdate_c.valid = 1;
+@@ -375,10 +381,10 @@ always_comb begin
+         end
+         // Handle non-predicted taken jumps or direction-only predicted branches
+         else if (curBr.valid) begin
+-            FetchOff_t actualOffs = curBr.fhPC[1+:$bits(FetchOff_t)];
++            actualOffs = curBr.fhPC[1+:$bits(FetchOff_t)];
+ 
+-            reg dirOnly = (curBr.btype == BRANCH && IN_op.predBr.valid && IN_op.predBr.dirOnly);
+-            reg dirOnlyTaken = (dirOnly && IN_op.predBr.taken);
++            dirOnly = (curBr.btype == BRANCH && IN_op.predBr.valid && IN_op.predBr.dirOnly);
++            dirOnlyTaken = (dirOnly && IN_op.predBr.taken);
+ 
+             // For taken branches with known target, do the jump now.
+             if (curBr.btype == JUMP || curBr.btype == CALL || curBr.btype == RETURN || dirOnlyTaken) begin
+@@ -447,7 +453,7 @@ always_comb begin
+ 
+         // A not-taken prediction was made, but there's no branch
+         else if (predicted) begin
+-            logic predIllegal = is32bit[IN_op.predBr.offs + ($bits(FetchOff_t)+1)'(1)];
++            predIllegal = is32bit[IN_op.predBr.offs + ($bits(FetchOff_t)+1)'(1)];
+ 
+             // branch to next instruction to correct history
+             decBranch_c.taken = 1;
+diff --git a/src/CSR.sv b/src/CSR.sv
+index c8ce467..a32ff79 100644
+--- a/src/CSR.sv
++++ b/src/CSR.sv
+@@ -370,6 +370,7 @@ reg interrupt;
+ TrapCause_t interruptCause;
+ reg interruptDelegate;
+ always_comb begin
++    integer i = 0;
+ 
+     // these are in reverse
+     InterruptIndices mPrio[5:0] = '{STI, SSI, SEI, MTI, MSI, MEI};
+@@ -381,7 +382,7 @@ always_comb begin
+ 
+ 
+     if (priv < PRIV_SUPERVISOR || (mstatus.sie && priv == PRIV_SUPERVISOR))
+-        for (integer i = 0; i < 3; i=i+1)
++        for (i = 0; i < 3; i=i+1)
+             if (mip[sPrio[i][3:0]] && mie[sPrio[i][3:0]]) begin
+                 interrupt = 1;
+                 interruptCause = {1'b0, sPrio[i]};
+@@ -389,7 +390,7 @@ always_comb begin
+             end
+ 
+     if (priv < PRIV_MACHINE || mstatus.mie)
+-        for (integer i = 0; i < 6; i=i+1)
++        for (i = 0; i < 6; i=i+1)
+             if (mip[mPrio[i][3:0]] && mie[mPrio[i][3:0]] && !mideleg[mPrio[i][3:0]]) begin
+                 interrupt = 1;
+                 interruptCause = {1'b0, mPrio[i]};
+diff --git a/src/CacheArbiter.sv b/src/CacheArbiter.sv
+index fd4e541..8497875 100644
+--- a/src/CacheArbiter.sv
++++ b/src/CacheArbiter.sv
+@@ -71,6 +71,12 @@ generate for (genvar bank = 0; bank < OUTPUT_BANKS; bank=bank+1) begin : gen_ban
+ end endgenerate
+ 
+ always_comb begin
++    integer idx = 0;
++
++    for (int b = 0; b < OUTPUT_BANKS; b++)
++      for (int p = 0; p < OUTPUT_PORTS; p++)
++        OUT_ports[b][p] = '{default:'0};
++
+     for (integer i = 0; i < INPUT_READS; i=i+1) begin
+         OUT_readReady[i] = 0;
+         outPortIdx[i] = 'x;
+@@ -92,7 +98,7 @@ always_comb begin
+ 
+         // write-only ports
+         for (integer i = 0; i < OUTPUT_W; i=i+1) begin
+-            integer idx = i + OUTPUT_R;
++            idx = i + OUTPUT_R;
+             OUT_ports[bank][idx] = IN_writes[reqIdx_w[bank][i]];
+             OUT_ports[bank][idx].ce = !reqIdxValid_w[bank][i];
+             OUT_writeReady[reqIdx_w[bank][i]] |= reqIdxValid_w[bank][i];
+@@ -101,7 +107,7 @@ always_comb begin
+ 
+         // read/write ports
+         if (OUTPUT_RW == 1) begin
+-            integer idx = OUTPUT_R + OUTPUT_W;
++            idx = OUTPUT_R + OUTPUT_W;
+ 
+             if (reqIdxValid_w[bank][OUT_W_CANDIDATES - 1]) begin
+                 localparam i = OUT_W_CANDIDATES - 1;
+diff --git a/src/CacheLineManager.sv b/src/CacheLineManager.sv
+index 3e352be..68e6ddf 100644
+--- a/src/CacheLineManager.sv
++++ b/src/CacheLineManager.sv
+@@ -164,7 +164,8 @@ end
+ 
+ // Cache Table Reads
+ always_comb begin
+-    for (integer i = 0; i < NUM_CT_READS; i=i+1) begin
++    integer i = 0;
++    for (i = 0; i < NUM_CT_READS; i=i+1) begin
+         IF_ct.re[i] = ctRead_c[i].valid;
+         IF_ct.raddr[i] = ctRead_c[i].addr;
+         OUT_ctReadReady[i] = 1;
+@@ -178,7 +179,7 @@ always_comb begin
+     end
+ 
+     if (ctWrite_c.valid)
+-        for (integer i = 0; i < NUM_CT_READS; i=i+1)
++        for (i = 0; i < NUM_CT_READS; i=i+1)
+             OUT_ctReadReady[i] = 0;
+ end
+ 
+diff --git a/src/IFetchPipeline.sv b/src/IFetchPipeline.sv
+index 517c8bf..28546b0 100644
+--- a/src/IFetchPipeline.sv
++++ b/src/IFetchPipeline.sv
+@@ -57,8 +57,9 @@ module IFetchPipeline#(parameter ASSOC=`CASSOC, parameter NUM_ICACHE_LINES=(1<<(
+ 
+ function automatic logic[1:0] CheckTransfersIF(MemController_Req memcReq, MemController_Res memcRes, CacheID_t cacheID, logic[31:0] addr, logic isStore);
+     logic[1:0] rv = 0;
++    integer i = 0;
+ 
+-    for (integer i = 0; i < `AXI_NUM_TRANS; i=i+1) begin
++    for (i = 0; i < `AXI_NUM_TRANS; i=i+1) begin
+         if (memcRes.transfers[i].valid &&
+             memcRes.transfers[i].cacheID == cacheID &&
+             memcRes.transfers[i].readAddr[31:`CLSIZE_E] == addr[31:`CLSIZE_E]
+diff --git a/src/IssueQueue.sv b/src/IssueQueue.sv
+index 9b968e0..96d8925 100644
+--- a/src/IssueQueue.sv
++++ b/src/IssueQueue.sv
+@@ -94,6 +94,7 @@ always_ff@(posedge clk) begin
+ end
+ 
+ always_comb begin
++    integer k = 0;
+     newAvail_c[0] = '0;
+     for (integer j = 1; j < AVAIL_SR_LEN-1; j=j+1)
+         newAvail_c[j] = newAvail_r[j+1];
+@@ -101,14 +102,14 @@ always_comb begin
+ 
+     for (integer i = 0; i < SIZE; i=i+1) begin
+         for (integer j = 0; j < RESULT_BUS_COUNT; j=j+1) begin
+-            for (integer k = 0; k < NUM_OPERANDS; k=k+1)
++            for (k = 0; k < NUM_OPERANDS; k=k+1)
+                 if (IN_flagUOp[j].valid && !IN_flagUOp[j].tagDst[$bits(Tag)-1] && queue[i].tags[k] == IN_flagUOp[j].tagDst)
+                     newAvail_c[0][i][k] = 1;
+         end
+ 
+         for (integer j = 0; j < NUM_ALUS; j=j+1) begin
+             if (IN_issueUOps[j].valid && !IN_issueUOps[j].tagDst[$bits(Tag)-1]) begin
+-                for (integer k = 0; k < NUM_OPERANDS; k=k+1)
++                for (k = 0; k < NUM_OPERANDS; k=k+1)
+                     if (queue[i].tags[k] == IN_issueUOps[j].tagDst) begin
+                         case (IN_issueUOps[j].fu)
+                             FU_INT, FU_BRANCH, FU_BITMANIP: newAvail_c[0][i][k] = 1;
+diff --git a/src/LoadStoreUnit.sv b/src/LoadStoreUnit.sv
+index 6675066..f28bca4 100644
+--- a/src/LoadStoreUnit.sv
++++ b/src/LoadStoreUnit.sv
+@@ -2,8 +2,9 @@
+ // [0] -> transfer exists; [1] -> allow pass thru
+ function automatic logic[1:0] CheckTransfers(MemController_Req memcReq, MemController_Res memcRes, CacheID_t cacheID, logic[31:0] addr, logic isStore);
+     logic[1:0] rv = 0;
++    integer i;
+ 
+-    for (integer i = 0; i < `AXI_NUM_TRANS; i=i+1) begin
++    for (i = 0; i < `AXI_NUM_TRANS; i=i+1) begin
+         if (memcRes.transfers[i].valid &&
+             memcRes.transfers[i].cacheID == cacheID &&
+             memcRes.transfers[i].readAddr[31:`CLSIZE_E] == addr[31:`CLSIZE_E]
+@@ -407,6 +408,24 @@ reg[$clog2(`CASSOC)-1:0] storeWriteAssoc;
+ LD_UOp curLd[NUM_AGUS-1:0];
+ reg blsuLoadHandled;
+ always_comb begin
++    reg isExtMMIO = 0;
++    reg noEvict = 0;
++    reg isMMIO = 0;
++    reg isCache = 0;
++
++    reg isIntMMIO = 0;
++    reg doCacheLoad = 0;
++
++    reg cacheHit = 0;
++    reg[31:0] readData = '0;
++
++    reg transferExists = 0;
++    reg allowPassThru = 0;
++
++    integer j = 0;
++
++    reg cacheTableHit = 0;
++    reg[$clog2(`CASSOC)-1:0] cacheHitAssoc = '0;
+ 
+     blsuLoadHandled = 0;
+ 
+@@ -433,15 +452,15 @@ always_comb begin
+         curLd[i] = ld;
+ 
+         if (ld.valid) begin
+-            reg isExtMMIO = !ldOps[i][1].valid;
+-            reg isIntMMIO = ld.valid && ld.isMMIO;
+-            reg isMMIO = isExtMMIO || isIntMMIO;
+-            reg isCache = !isExtMMIO && !isIntMMIO;
+-            reg noEvict = !IN_ctResult[i].data[IN_ctResult[i].assocCnt].valid;
+-            reg doCacheLoad = 1;
++            isExtMMIO = !ldOps[i][1].valid;
++            isIntMMIO = ld.valid && ld.isMMIO;
++            isMMIO = isExtMMIO || isIntMMIO;
++            isCache = !isExtMMIO && !isIntMMIO;
++            noEvict = !IN_ctResult[i].data[IN_ctResult[i].assocCnt].valid;
++            doCacheLoad = 1;
+ 
+-            reg cacheHit = 0;
+-            reg[31:0] readData = 'x;
++            cacheHit = 0;
++            readData = 'x;
+ 
+             if (ld.dataValid) begin
+                 readData = ld.data;
+@@ -465,8 +484,6 @@ always_comb begin
+ 
+                 // check if address is already being transferred
+                 begin
+-                    reg transferExists;
+-                    reg allowPassThru;
+                     {allowPassThru, transferExists} = CheckTransfers(LSU_memc, IN_memc, 0, ld.addr, 0);
+                     if (transferExists) begin
+                         doCacheLoad = 0;
+@@ -520,7 +537,7 @@ always_comb begin
+             else if (!isMMIO) begin
+ 
+                 if (cacheHit || ld.dataValid) begin
+-                    for (integer j = 0; j < 4; j=j+1) begin
++                    for (j = 0; j < 4; j=j+1) begin
+                         if (stFwd[i].mask[j]) readData[j*8+:8] = stFwd[i].data[j*8+:8];
+                     end
+ 
+@@ -551,11 +568,11 @@ always_comb begin
+     begin
+         ST_UOp st = stOps[1];
+         if (st.valid) begin
+-            reg cacheHit = 0;
+-            reg cacheTableHit = 1;
+-            reg doCacheLoad = 1;
+-            reg[$clog2(`CASSOC)-1:0] cacheHitAssoc = 'x;
+-            reg noEvict = !IN_ctResult[STORE_PORT].data[IN_ctResult[STORE_PORT].assocCnt].valid;
++            cacheHit = 0;
++            cacheTableHit = 1;
++            doCacheLoad = 1;
++            cacheHitAssoc = 'x;
++            noEvict = !IN_ctResult[STORE_PORT].data[IN_ctResult[STORE_PORT].assocCnt].valid;
+ 
+             // check for hit in cache table
+             if (stAssocHit_c.valid) begin
+@@ -567,8 +584,6 @@ always_comb begin
+ 
+             // check if address is already being transferred
+             begin
+-                reg transferExists;
+-                reg allowPassThru;
+                 {allowPassThru, transferExists} = CheckTransfers(LSU_memc, IN_memc, 0, st.addr, 1);
+                 if (transferExists) begin
+                     doCacheLoad = 0; // this is only needed for one cycle
+diff --git a/src/MemoryController.sv b/src/MemoryController.sv
+index e61d100..0b8af25 100644
+--- a/src/MemoryController.sv
++++ b/src/MemoryController.sv
+@@ -136,15 +136,17 @@ endfunction
+ MemController_Req selReq;
+ always_comb begin
+     reg cacheAddrColl = 'x;
++    integer i = 0;
++    integer j = 0;
+     OUT_stat.stall = {NUM_TFS_IN{1'b1}};
+     selReq = 'x;
+     selReq.cmd = MEMC_NONE;
+ 
+     if (enqIdxValid) begin
+-        for (integer i = 0; i < NUM_TFS_IN; i=i+1) begin
++        for (i = 0; i < NUM_TFS_IN; i=i+1) begin
+             if (selReq.cmd == MEMC_NONE && IN_ctrl[i].cmd != MEMC_NONE) begin
+                 cacheAddrColl = 0;
+-                for (integer j = 0; j < `AXI_NUM_TRANS; j=j+1)
++                for (j = 0; j < `AXI_NUM_TRANS; j=j+1)
+                     cacheAddrColl |=
+                         transfers[j].valid &&
+                         IsCacheOp(IN_ctrl[i].cmd) &&
+@@ -370,6 +372,9 @@ FIFO#(R_LEN, 32, 1, 1) rFIFO
+ );
+ // Forward AXI read data to cache
+ always_comb begin
++  integer i = 0;
++  CacheID_t cID = '0;
++
+     // Defaults
+     buf_rready = 0;
+ 
+@@ -388,7 +393,7 @@ always_comb begin
+             buf_rready = 1;
+         end
+         else begin
+-            CacheID_t cID = transfers[buf_rid].cacheID;
++            cID = transfers[buf_rid].cacheID;
+             case (cID)
+             0: if (DCW_ready && transfers[buf_rid].evictProgress > transfers[buf_rid].addrCounter) begin // dcache
+                 buf_rready = 1;
+@@ -398,7 +403,7 @@ always_comb begin
+                 DCW_id = buf_rid;
+ 
+                 if (transfers[buf_rid].addrCounter == 0) begin
+-                    for (integer i = 0; i < (`AXI_WIDTH/8); i=i+1)
++                    for (i = 0; i < (`AXI_WIDTH/8); i=i+1)
+                         if (transfers[buf_rid].storeMask[i]) begin
+                             DCW_data[i*8+:8] = transfers[buf_rid].storeData[i*8+:8];
+                         end
+diff --git a/src/Rename.sv b/src/Rename.sv
+index faf8de9..c86d72c 100644
+--- a/src/Rename.sv
++++ b/src/Rename.sv
+@@ -196,13 +196,14 @@ TagBuffer#(.NUM_ISSUE(WIDTH_ISSUE), .NUM_COMMIT(WIDTH_COMMIT)) tb
+ 
+ reg isNewestCommit[WIDTH_COMMIT-1:0];
+ always_comb begin
++    integer j = 0;
+     for (integer i = 0; i < WIDTH_COMMIT; i=i+1) begin
+ 
+         // When rd == 0, the register is (also) discarded immediately instead of being committed.
+         // This is currently only used for rmw atomics with rd=x0.
+         isNewestCommit[i] = IN_comUOp[i].valid && IN_comUOp[i].rd != 0;
+         if (IN_comUOp[i].valid)
+-            for (integer j = i + 1; j < WIDTH_COMMIT; j=j+1)
++            for (j = i + 1; j < WIDTH_COMMIT; j=j+1)
+                 if (IN_comUOp[j].valid && (IN_comUOp[j].rd == IN_comUOp[i].rd))
+                     isNewestCommit[i] = 0;
+     end
+diff --git a/src/Scheduler.sv b/src/Scheduler.sv
+index fbd32d6..05cceca 100644
+--- a/src/Scheduler.sv
++++ b/src/Scheduler.sv
+@@ -18,9 +18,10 @@ typedef logic[NUM_ALUS-1:0] Candidates_t;
+ function automatic Candidates_t GetCandidates(FuncUnit fu, SqN sqN, SqN loadSqN, SqN storeSqN);
+     Candidates_t retval = '0;
+ 
++    integer i = 0;
+     case (fu)
+         default: begin
+-            for (integer i = 0; i < 4; i=i+1)
++            for (i = 0; i < 4; i=i+1)
+                 if (PORT_FUS[i][fu] != 0)
+                     retval |= (1 << i);
+         end
+diff --git a/src/SoC.sv b/src/SoC.sv
+index 3b2d0f2..e257328 100644
+--- a/src/SoC.sv
++++ b/src/SoC.sv
+@@ -176,6 +176,7 @@ end
+ 
+ always_comb begin
+     MC_DC_rd_ready = cacheReadReady[0];
++    IF_cache.busy = '0;
+     for (integer i = 0; i < NUM_AGUS; i=i+1)
+         IF_cache.busy[i] = !cacheReadReady[1+i];
+ 
+diff --git a/src/StoreQueue.sv b/src/StoreQueue.sv
+index 5358cf0..e858f3d 100644
+--- a/src/StoreQueue.sv
++++ b/src/StoreQueue.sv
+@@ -138,6 +138,8 @@ always_comb begin
+     reg[31:0] data = 'x;
+     reg[3:0] mask = 'x;
+ 
++    integer j = 0;
++
+     // Bytes that are not read by this op are set to available in the lookup mask
+     // (could also do this in LSU)
+     lookupMask[h] = ~readMask[h];
+@@ -149,7 +151,7 @@ always_comb begin
+             OUT_uop[i].addr[31:2] == lookupAddr[h][31:2] &&
+             !`IS_MMIO_PMA(OUT_uop[i].addr)
+         ) begin
+-            for (integer j = 0; j < 4; j=j+1)
++            for (j = 0; j < 4; j=j+1)
+                 if (OUT_uop[i].wmask[j])
+                     lookupData[h][j*8 +: 8] = OUT_uop[i].data[j*8 +: 8];
+             lookupMask[h] = lookupMask[h] | OUT_uop[i].wmask;
+@@ -169,7 +171,7 @@ always_comb begin
+ 
+             if (entries[ii].loaded) begin
+ 
+-                for (integer j = 0; j < 4; j=j+1)
++                for (j = 0; j < 4; j=j+1)
+                     if (entries[ii].wmask[j]) begin
+                         lookupData[h][j*8 +: 8] = entries[ii].data[j*8 +: 8];
+                         lookupMask[h][j] = 1;
+@@ -202,6 +204,7 @@ for (genvar h = 0; h < NUM_AGUS; h=h+1)
+ for (genvar i = 0; i < NUM_ENTRIES; i=i+1)
+ always_comb begin
+ 
++  integer j = 0;
+     integer prev = ((i-1) >= 0) ? (i-1) : (NUM_ENTRIES-1);
+     // break in circular feedback
+     if (i == baseIndex[IDX_LEN-1:0]) begin
+@@ -222,7 +225,7 @@ always_comb begin
+     ) begin
+ 
+         if (entries[i].loaded) begin
+-            for (integer j = 0; j < 4; j=j+1)
++            for (j = 0; j < 4; j=j+1)
+                 if (entries[i].wmask[j]) begin
+                     lookupDataIter[h][i][j*8 +: 8] = entries[i].data[j*8 +: 8];
+                     lookupMaskIter[h][i][j] = 1;
+diff --git a/src/StoreQueueBackend.sv b/src/StoreQueueBackend.sv
+index 2c823ca..38523df 100644
+--- a/src/StoreQueueBackend.sv
++++ b/src/StoreQueueBackend.sv
+@@ -58,12 +58,15 @@ always_ff@(posedge clk /*or posedge rst*/)
+     else fusedUOp_r <= fusedUOp_c;
+ 
+ always_comb begin
++    integer i = 0;
++    integer j = 0;
++
+     fusedUOp_c = fusedUOp_r;
+ 
+     if (evInsert.valid)
+         fusedUOp_c = EQEntry'{valid: 0, default: 'x};
+ 
+-    for (integer i = 0; i < NUM_IN; i=i+1)
++    for (i = 0; i < NUM_IN; i=i+1)
+         OUT_stall[i] = 1;
+ 
+     if ((!fusedUOp_r.valid || evInsert.valid) && IN_uop[0].valid) begin
+@@ -87,13 +90,13 @@ always_comb begin
+             fusedUOp_c.data = `AXI_WIDTH'(IN_uop[0].data) << IN_uop[0].addr[AXI_BWIDTH_E-1:2]*32;
+ 
+             // Try to fuse in younger stores
+-            for (integer i = 1; i < NUM_IN; i=i+1) begin
++            for (i = 1; i < NUM_IN; i=i+1) begin
+                 if (IN_uop[i].valid &&
+                     IN_uop[i].addr[31:AXI_BWIDTH_E] == fusedUOp_c.addr[29:AXI_BWIDTH_E-2] &&
+                     !`IS_MMIO_PMA(IN_uop[i].addr)
+                 ) begin
+                     OUT_stall[i] = 0;
+-                    for (integer j = 0; j < AXI_BWIDTH; j=j+1) begin
++                    for (j = 0; j < AXI_BWIDTH; j=j+1) begin
+                         if (IN_uop[i].addr[AXI_BWIDTH_E-1:2] == j[AXI_BWIDTH_E-1:2] &&
+                             IN_uop[i].wmask[j[1:0]]
+                         ) begin
+@@ -124,6 +127,8 @@ always_comb begin
+     reg[31:0] data = 'x;
+     reg[3:0] mask = 'x;
+ 
++    integer j = 0;
++
+     lookupMask[h] = 0;
+     lookupData[h] = 32'bx;
+ 
+@@ -136,7 +141,7 @@ always_comb begin
+             evictedV[i].addr[29:AXI_BWIDTH_E-2] == IN_uopLd[h].addr[31:AXI_BWIDTH_E] &&
+             !`IS_MMIO_PMA_W(evictedV[i].addr)
+         ) begin
+-            for (integer j = 0; j < 4; j=j+1)
++            for (j = 0; j < 4; j=j+1)
+                 if (mask[j])
+                     lookupData[h][j*8 +: 8] = data[j*8 +: 8];
+             lookupMask[h] = lookupMask[h] | mask;
+@@ -164,10 +169,11 @@ end
+ // Find unused index for insertion
+ IdxN evInsert;
+ always_comb begin
++    integer i = 0;
+     evInsert = IdxN'{valid: 0, default: 'x};
+ 
+     if (!(mmioOpInEv && `IS_MMIO_PMA_W(fusedUOp_r.addr)) && !mgmtOpInEv)
+-        for (integer i = 0; i < NUM_EVICTED; i=i+1) begin
++        for (i = 0; i < NUM_EVICTED; i=i+1) begin
+             if ((evicted[i].valid &&
+                  evicted[i].addr[29:AXI_BWIDTH_E-2] == fusedUOp_r.addr[29:AXI_BWIDTH_E-2]) ||
+                 (!evicted[i].valid && !evInsert.valid)
+diff --git a/src/TLB.sv b/src/TLB.sv
+index 8f14ae1..b54e290 100644
+--- a/src/TLB.sv
++++ b/src/TLB.sv
+@@ -29,6 +29,7 @@ reg[$clog2(ASSOC)-1:0] counters[LEN-1:0];
+ reg[LEN-1:0] inc;
+ 
+ always_comb begin
++    integer j = 0;
+     inc = '0;
+     for (integer i = 0; i < NUM_RQ; i=i+1) begin
+         reg[$clog2(LEN)-1:0] idx = IN_rqs[i].vpn[$clog2(LEN)-1:0];
+@@ -38,7 +39,7 @@ always_comb begin
+         OUT_res[i].hit = 0;
+ 
+         if (IN_rqs[i].valid)
+-            for (integer j = 0; j < ASSOC; j=j+1)
++            for (j = 0; j < ASSOC; j=j+1)
+                 if (tlb[idx][j].valid &&
+                     (tlb[idx][j].isSuper ?
+                         tlb[idx][j].vpn[19-$clog2(LEN):10-$clog2(LEN)] == IN_rqs[i].vpn[19:10] :
+diff --git a/src/TagePredictor.sv b/src/TagePredictor.sv
+index 49d4b4f..073b2c5 100644
+--- a/src/TagePredictor.sv
++++ b/src/TagePredictor.sv
+@@ -58,7 +58,8 @@ reg[TAG_SIZE-1:0] writeTags[NUM_STAGES-2:0];
+ always_comb begin
+ 
+     for (integer i = 0; i < NUM_STAGES-1; i=i+1) begin
+-        integer hist_bits = (BASE * (FACTOR ** i));
++	integer hist_bits;
++        hist_bits = (BASE * (FACTOR ** i));
+ 
+         predTags[i] = IN_predAddr[TAG_SIZE-1:0];
+         writeTags[i] = IN_writeAddr[TAG_SIZE-1:0];
+@@ -95,17 +96,20 @@ reg allocFailed;
+ always_comb begin
+     reg[NUM_STAGES-1:0] followingAllocAvail = '0;
+     reg temp = 0;
++
++    integer i = 0;
++    integer j = 0;
+     doAlloc = '0;
+     allocFailed = 0;
+ 
+     // Try to allocate a bigger entry on mispredict
+     if (IN_writeTaken != IN_writePred) begin
+-        for (integer i = 0; i < NUM_STAGES; i=i+1) begin
+-            for (integer j = i + 1; j < NUM_STAGES; j=j+1)
++        for (i = 0; i < NUM_STAGES; i=i+1) begin
++            for (j = i + 1; j < NUM_STAGES; j=j+1)
+                 followingAllocAvail[i] |= avail[j];
+         end
+ 
+-        for (integer i = 0; i < NUM_STAGES; i=i+1) begin
++        for (i = 0; i < NUM_STAGES; i=i+1) begin
+             if (i > IN_writeTageID && avail[i] && temp == 0 &&
+                 // Allocate with 75% chance if other slots are available
+                 (!followingAllocAvail[i] || random[(i%4)*2+:2] != 2'b00)) begin
+diff --git a/src/TrapHandler.sv b/src/TrapHandler.sv
+index 7bfdf28..8b3abe4 100644
+--- a/src/TrapHandler.sv
++++ b/src/TrapHandler.sv
+@@ -78,6 +78,10 @@ end
+ 
+ assign OUT_branch = OUT_branch_c;
+ always_comb begin
++    reg delegate = '0;
++    reg isInterrupt = '0;
++    TrapCause_t trapCause = '0;
++
+     OUT_fence_c = 0;
+     OUT_clearICache_c = 0;
+ 
+@@ -172,9 +176,9 @@ always_comb begin
+                 (IN_trapInstr.flags >= FLAGS_ILLEGAL_INSTR && IN_trapInstr.flags <= FLAGS_ST_PF)
+             ) begin
+ 
+-                TrapCause_t trapCause = RVP_TRAP_ILLEGAL;
+-                reg delegate = 'x;
+-                reg isInterrupt = !IN_trapInstr.timeout &&
++                trapCause = RVP_TRAP_ILLEGAL;
++                delegate = 'x;
++                isInterrupt = !IN_trapInstr.timeout &&
+                     (IN_trapInstr.flags == FLAGS_TRAP && IN_trapInstr.rd == 5'(TRAP_V_INTERRUPT));
+ 
+                 if (IN_trapInstr.timeout) begin

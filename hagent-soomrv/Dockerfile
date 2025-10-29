@@ -53,11 +53,13 @@ RUN riscv32-unknown-elf-gcc --version && verilator --version
 
 COPY hagent.yaml /code/workspace/repo/
 
-COPY fix-verilator-5.040.patch /code/workspace/repo
+COPY makefile.patch sv2v-synth.patch slang-hpp.patch /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
 
-RUN patch -p1 < fix-verilator-5.040.patch
+RUN patch -p1 < makefile.patch && \
+    patch -p1 < sv2v-synth.patch && \
+    patch -p1 < slang-hpp.patch
 
 RUN git config --global --add safe.directory '*' && \
     rm -rf riscv-isa-sim && \
