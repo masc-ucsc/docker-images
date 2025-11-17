@@ -1,0 +1,29 @@
+profiles:
+  - name: fifo_formal
+    description: "Run Formal Agent on Sync_FIFO FIFO demo (with Jasper)"
+    memory: 4
+    configuration:
+      source: "track_repo_dir('src', ext='.sv')"          # /code/workspace/repo/src
+      output: "track_build_dir('fpv_Sync_FIFO')"          # /code/workspace/build/fpv_Sync_FIFO
+      environment:
+        HAGENT_REPO_DIR: "/code/workspace/repo"
+        HAGENT_BUILD_DIR: "/code/workspace/build"
+        HAGENT_CACHE_DIR: "/code/workspace/cache"
+        SLANG_BIN: "/usr/local/bin/slang"
+        PYTHONPATH: "/code/hagent-private"
+
+    apis:
+      - name: run_formal_fifo
+        description: "Run cli_formal on Sync_FIFO"
+        command: >
+          bash -lc '
+            mkdir -p "${HAGENT_BUILD_DIR}" "${HAGENT_CACHE_DIR}" &&
+            cd /code/hagent &&
+            uv run python3 -m hagent.tool.cli_formal
+              --slang "${SLANG_BIN}"
+              --rtl   "${HAGENT_REPO_DIR}/src"
+              --top   Sync_FIFO
+              --out   "${HAGENT_BUILD_DIR}"
+          '
+        cwd: /code/hagent
+

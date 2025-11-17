@@ -3,14 +3,14 @@ profiles:
     description: "Generate specification from CVA6 RTL using run_spec_builder.py"
     memory: 8
     configuration:
-      # track_repo_dir is relative to /code/workspace/repo
+      # track_repo_dir is relative to $HAGENT_REPO_DIR
       source: "track_repo_dir('core', ext='.sv')"
-      # track_build_dir is relative to /code/workspace/build
+      # track_build_dir is relative to $HAGENT_BUILD_DIR
       output: "track_build_dir('.')"
-      environment: # Will inherit docker image, so no need to reset CVA6_HOME
+      environment:
         SLANG_BIN: "/usr/local/bin/slang"
-        HPDCACHE_DIR: "/code/workspace/repo/core/cache_subsystem/hpdcache/"
-        CVA6_REPO_DIR: "/code/workspace/repo/"
+        HPDCACHE_DIR: "$HAGENT_REPO_DIR/core/cache_subsystem/hpdcache/"
+        CVA6_REPO_DIR: "$HAGENT_REPO_DIR/"
     apis:
       - name: spec_builder
         description: "Run spec builder for CVA6"
@@ -20,22 +20,76 @@ profiles:
               --mode single \
               --slang ${SLANG_BIN} \
               --llm-conf hagent/step/sva_gen/spec_prompt.yaml \
-              --include $HAGENT_REPO_DIR/core/include \
-              --rtl $HAGENT_REPO_DIR/core \
+              --include ${HAGENT_REPO_DIR}/core/include \
+              --rtl ${HAGENT_REPO_DIR}/core \
               --top load_store_unit
           '
+        cwd: $HAGENT_REPO_DIR
       - name: run_slang
         description: "Run slang"
         command: >
-          slang --top load_store_unit --ast-json ${HAGENT_BUILD_DIR}/load_store_unit.json --disable-analysis \
-                --ast-json-source-info --ignore-unknown-modules --allow-use-before-declare --diag-abs-paths \
-                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv -f ./core/Flist.cva6
+          slang --top load_store_unit \
+                --ast-json ${HAGENT_BUILD_DIR}/load_store_unit.json \
+                --disable-analysis \
+                --ast-json-source-info \
+                --ignore-unknown-modules \
+                --allow-use-before-declare \
+                --diag-abs-paths \
+                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv \
+                -f ./core/Flist.cva6
         cwd: $HAGENT_REPO_DIR
       - name: synth_asic
         description: "ASIC Synthesis for CVA6 core"
         command: >
-          /code/hagent/scripts/synth.py --sta --tech-dir /code/workspace/tech --netlist ${HAGENT_BUILD_DIR}/netlist.v --top cva6 \
-                --ignore-unknown-modules --allow-use-before-declare \
-                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv -f ./core/Flist.cva6
+          /code/hagent/scripts/synth.py --sta \
+                --tech-dir /code/workspace/tech \
+                --netlist ${HAGENT_BUILD_DIR}/netlist.v \
+                --top cva6 \
+                --ignore-unknown-modules \
+                --allow-use-before-declare \
+                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv \
+                -f ./core/Flist.cva6
         cwd: $HAGENT_REPO_DIR
 
+  # --------------------------------------------------------------------------
+  # NEW: Formal FPV pipeline for CVA6 load_store_unit using cli_formal
+  # --------------------------------------------------------------------------
+  - name: formal_lsu
+    description: "Run formal FPV (cli_formal) for CVA6 load_store_unit"
+    memory: 16
+    configuration:
+      source: "track_repo_dir('core', ext='.sv')"
+      output: "track_build_dir('formal_lsu', ext='.log')"
+      environment:
+        SLANG_BIN: "/usr/local/bin/slang"
+        HPDCACHE_DIR: "$HAGENT_REPO_DIR/core/cache_subsystem/hpdcache/"
+        CVA6_REPO_DIR: "$HAGENT_REPO_DIR/"
+        # Optional: set at runtime if Jasper is present
+        # JASPER_BIN: "/mada/software/cadence/JASPER24/bin/jg"
+    apis:
+      - name: fpv_no_jg
+        description: "Generate FPV.tcl + SVA for load_store_unit (no Jasper run)"
+        command: >
+          bash -lc '
+            cd /code/hagent && \
+            uv run python -m hagent.tool.cli_formal \
+              --slang ${SLANG_BIN} \
+              --rtl ${CVA6_REPO_DIR}/core \
+              --top load_store_unit \
+              --out ${HAGENT_BUILD_DIR} \
+              -I ${CVA6_REPO_DIR}/core/include
+          '
+      - name: fpv_with_jg
+        description: "Full formal run: generate FPV.tcl + SVA + run JasperGold for load_store_unit"
+        command: >
+          bash -lc '
+            cd /code/hagent && \
+            uv run python -m hagent.tool.cli_formal \
+              --slang ${SLANG_BIN} \
+              --rtl ${CVA6_REPO_DIR}/core \
+              --top load_store_unit \
+              --out ${HAGENT_BUILD_DIR} \
+              -I ${CVA6_REPO_DIR}/core/include \
+              --run-jg \
+              --jasper-bin ${JASPER_BIN:-jg}
+          '
