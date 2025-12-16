@@ -40,3 +40,108 @@ profiles:
         description: "Run single B-extension test"
         command: "./obj_dir/VTop test_programs/bitmanip.s"
         cwd: "$HAGENT_REPO_DIR"
+      - name: synth_asic
+        description: "ASIC synthesis using Yosys"
+        command: |
+          /code/hagent/scripts/synth.py --sv2v --sta {{top}} {{top_synth}} --netlist ${HAGENT_BUILD_DIR}/netlist.v \
+          src/lib/PriorityEncoder.sv \
+          src/lib/OHEncoder.sv \
+          src/lib/RangeMaskGen.sv \
+          src/lib/PrefixSum.sv \
+          src/lib/PrefixRed.sv \
+          src/lib/OpDownsample.sv \
+          src/lib/PopCnt.sv \
+          src/lib/FIFO.sv \
+          src/Config.sv \
+          src/Include.sv  \
+          src/InstrDecoder.sv  \
+          src/Rename.sv  \
+          src/Core.sv  \
+          src/IssueQueue.sv  \
+          src/IntALU.sv  \
+          src/IFetch.sv \
+          src/Load.sv \
+          src/ROB.sv \
+          src/AGU.sv \
+          src/BranchPredictor.sv \
+          src/LoadBuffer.sv \
+          src/StoreQueue.sv \
+          src/Multiply.sv \
+          src/Divide.sv \
+          src/MMIO.sv \
+          src/BranchSelector.sv \
+          src/MemRTL.sv \
+          src/MemRTL2W.sv \
+          src/Top.sv \
+          src/MemoryController.sv \
+          src/RenameTable.sv \
+          src/TagBuffer.sv \
+          src/FPU.sv \
+          src/FMul.sv \
+          src/FDiv.sv \
+          src/BranchTargetBuffer.sv \
+          src/BranchPredictionTable.sv \
+          src/ReturnStack.sv \
+          src/TageTable.sv \
+          src/TagePredictor.sv \
+          src/LoadStoreUnit.sv \
+          src/IFetchPipeline.sv \
+          src/CSR.sv \
+          src/TrapHandler.sv \
+          src/Peripherals.sv \
+          src/PageWalker.sv \
+          src/LoadSelector.sv \
+          src/LoadResultBuffer.sv \
+          src/TLB.sv \
+          src/BypassLSU.sv \
+          src/TValSelect.sv \
+          src/SoC.sv \
+          src/TLBMissQueue.sv \
+          src/ExternalAXISim.sv \
+          src/CacheWriteInterface.sv \
+          src/CacheReadInterface.sv \
+          src/RegFileRTL.sv \
+          src/BranchHandler.sv \
+          src/StoreDataIQ.sv \
+          src/StoreDataLoad.sv \
+          src/StoreQueueBackend.sv \
+          src/Scheduler.sv \
+          src/ResultFlagsSplit.sv \
+          src/InstrAligner.sv \
+          src/RFReadMux.sv \
+          src/CacheArbiter.sv \
+          src/MemRTL1RW.sv \
+          src/ExternalBus.sv \
+          src/ExternalBusMem.sv \
+          src/CacheLineManager.sv \
+          src/DataPrefetch.sv \
+          src/PrefetchPatternDetector.sv \
+          src/PrefetchIssuer.sv \
+          src/PrefetchExecutor.sv \
+          hardfloat/addRecFN.v \
+          hardfloat/compareRecFN.v \
+          hardfloat/fNToRecFN.v \
+          hardfloat/HardFloat_primitives.v \
+          hardfloat/HardFloat_specialize.v \
+          hardfloat/recFNToIN.v \
+          hardfloat/recFNToFN.v \
+          hardfloat/mulRecFN.v \
+          hardfloat/HardFloat_rawFN.v \
+          --single-unit \
+          --std latest \
+          --allow-use-before-declare \
+          --relax-enum-conversions \
+          --ignore-unknown-modules \
+          --allow-toplevel-iface-ports \
+          -Wno-explicit-static \
+          -Wno-missing-top
+        cwd: "$HAGENT_REPO_DIR"
+        options:
+          - name: top_synth
+            description: "Optional top synthesis module for faster synthesis that avoids top elaboration"
+            format: "--top-synthesis {value}:"
+            default: ""
+          - name: top
+            description: "Top module for elaboration"
+            format: "--top {value}:"
+            default: "--top SoC"

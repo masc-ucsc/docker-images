@@ -25,3 +25,13 @@ cmake ..
 make -j 16
 make install
 rm -rf /tmp/yosys-slang
+
+# Install sv2v that sometimes yosys needs
+# apt install -y haskell-stack
+# cd /tmp
+# git clone https://github.com/zachjs/sv2v.git
+# cd sv2v
+# make
+# cp bin/sv2v /usr/local/bin/
+# cd /tmp/
+# rm -rf /tmp/sv2v
