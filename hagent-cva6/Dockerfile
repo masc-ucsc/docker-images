@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.10
+FROM mascucsc/hagent-builder:2025.12
 
 #USER user
 WORKDIR /code/workspace
@@ -17,8 +17,8 @@ RUN git clone --filter=blob:none --no-checkout https://github.com/openhwgroup/cv
 
 # Copy patch file and hagent.yaml (paths are relative to build context root)
 # You are running: docker build -f docker-images/hagent-cva6/Dockerfile .
-COPY docker-images/hagent-cva6/cva6.patch /code/workspace/repo/
-COPY docker-images/hagent-cva6/hagent.yaml /code/workspace/repo/
+COPY cva6.patch /code/workspace/repo/
+COPY hagent.yaml /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
 
@@ -33,4 +33,3 @@ ENV HAGENT_BUILD_DIR=/code/workspace/build
 
 ENV HPDCACHE_DIR=/code/workspace/repo/core/cache_subsystem/hpdcache
 ENV CVA6_REPO_DIR=/code/workspace/repo
-

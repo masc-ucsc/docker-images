@@ -36,3 +36,7 @@ profiles:
         description: "Run single Dhrystone test as example"
         command: "./obj_dir/VTop test_programs/dhry_1.s"
         cwd: "$HAGENT_REPO_DIR"
+      - name: bitmanip
+        description: "Run single B-extension test"
+        command: "./obj_dir/VTop test_programs/bitmanip.s"
+        cwd: "$HAGENT_REPO_DIR"

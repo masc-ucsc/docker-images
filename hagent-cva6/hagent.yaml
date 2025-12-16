@@ -16,7 +16,7 @@ profiles:
         description: "Run spec builder for CVA6"
         command: >
           bash -lc '
-            poetry run python hagent/step/sva_gen/run_spec_builder.py \
+            uv run python hagent/step/sva_gen/run_spec_builder.py \
               --mode single \
               --slang ${SLANG_BIN} \
               --llm-conf hagent/step/sva_gen/spec_prompt.yaml \

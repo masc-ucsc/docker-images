@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.10
+FROM mascucsc/hagent-builder:2025.12
 
 # Standard layout inside the container
 ENV HAGENT_WORKSPACE=/code/workspace
@@ -18,8 +18,7 @@ ENV SLANG_BIN=/usr/local/bin/slang
 
 # (Optional) copy FIFO-specific hagent.yaml into the repo
 # If you don't have one yet, you can comment this out.
-COPY docker-images/hagent-fifo/hagent.yaml ${HAGENT_REPO_DIR}/hagent.yaml
+COPY hagent.yaml ${HAGENT_REPO_DIR}/hagent.yaml
 
 # NOTE: we do NOT run cli_formal or uv at build time to avoid "uv: command not found"
 # We’ll run cli_formal manually inside the container.
-

@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.10
+FROM mascucsc/hagent-builder:2025.12
 
 # Install the packages that SoomRV requires but hagent-builder base image does not have.
 RUN apt-get update && apt-get install -y \
@@ -53,11 +53,12 @@ RUN riscv32-unknown-elf-gcc --version && verilator --version
 
 COPY hagent.yaml /code/workspace/repo/
 
-COPY makefile.patch sv2v-synth.patch slang-hpp.patch /code/workspace/repo/
+COPY makefile.patch sv2v-synth.patch slang-hpp.patch sim.patch /code/workspace/repo/
 
 WORKDIR /code/workspace/repo
 
 RUN patch -p1 < makefile.patch && \
+    patch -p1 < sim.patch && \
     patch -p1 < sv2v-synth.patch && \
     patch -p1 < slang-hpp.patch
 

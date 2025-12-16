@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.10
+FROM mascucsc/hagent-builder:2025.12
 
 ENV NOOP_HOME=/code/workspace/repo
 ENV NEMU_HOME=/code/workspace/NEMU
