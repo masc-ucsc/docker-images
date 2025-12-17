@@ -6,7 +6,7 @@ WORKDIR /code/workspace
 
 RUN curl -fL https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz | gzip -d > cs && chmod +x cs && ./cs setup -y --apps sbt
 
-ENV PATH="${OSS_CAD_DIR}/bin/:/usr/local/bin:/root/.local/share/coursier/bin:${PATH}"
+ENV PATH="/usr/local/bin:/root/.local/share/coursier/bin:${PATH}"
 ENV HAGENT_REPO_DIR=/code/workspace/repo
 ENV HAGENT_BUILD_DIR=/code/workspace/build
 

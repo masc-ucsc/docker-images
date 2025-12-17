@@ -12,6 +12,7 @@ docker login
 
 docker push mascucsc/hagent-builder:${TAG_DATE}
 docker push mascucsc/hagent-simplechisel:${TAG_DATE}
+docker push mascucsc/hagent-fifo:${TAG_DATE}
 docker push mascucsc/hagent-cva6:${TAG_DATE}
 docker push mascucsc/hagent-xiangshan:${TAG_DATE}
 docker push mascucsc/hagent-soomrv:${TAG_DATE}

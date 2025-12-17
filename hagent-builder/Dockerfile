@@ -19,6 +19,7 @@ RUN apt-get update && \
       g++ \
       clang \
       cmake \
+      make \
       vim \
       llvm \
       curl \
@@ -54,21 +55,22 @@ RUN curl -L https://github.com/bazelbuild/bazelisk/releases/latest/download/baze
 RUN apt-get install -y openjdk-17-jre
 
 COPY install-slang.sh /tmp/install-slang.sh
-RUN bash /tmp/install-slang.sh && rm -rf /tmp/slang /tmp/install-slang.sh
+RUN bash /tmp/install-slang.sh
+
+# UV used by hagent (yosys uses it too)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 COPY install-yosys.sh /tmp/install-yosys.sh
-RUN bash /tmp/install-yosys.sh && rm -rf /tmp/yosys* /tmp/install-yosys.sh
+RUN bash /tmp/install-yosys.sh
 
 COPY install-openroad.sh /tmp/install-openroad.sh
-RUN bash /tmp/install-openroad.sh && rm -rf /tmp/openroad /tmp/install-openroad.sh
+RUN bash /tmp/install-openroad.sh
 
 COPY install-verilator.sh /tmp/install-verilator.sh
-RUN bash /tmp/install-verilator.sh && rm -rf /tmp/verilator /tmp/install-verilator.sh
+RUN bash /tmp/install-verilator.sh
 
 RUN apt-get install -y iverilog
 
-# UV used by hagent
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
@@ -82,4 +84,3 @@ RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers /code/works
 
 # Create mountpoints in workspace
 RUN mkdir -p /code/workspace/cache /code/workspace/build /code/workspace/repo /code/workspace/tech
-

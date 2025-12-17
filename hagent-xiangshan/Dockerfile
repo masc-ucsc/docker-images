@@ -33,7 +33,7 @@ WORKDIR /code/workspace/repo
 # Apply the patch
 RUN patch -p1 < xiangshan.patch
 
-ENV PATH="${OSS_CAD_DIR}/bin/:/usr/local/bin:${PATH}"
+ENV PATH="/usr/local/bin:${PATH}"
 ENV HAGENT_REPO_DIR=/code/workspace/repo
 ENV HAGENT_BUILD_DIR=/code/workspace/build
 

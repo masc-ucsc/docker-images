@@ -3,11 +3,11 @@
 export DEBIAN_FRONTEND=noninteractive
 
 # Install yosys dependencies
-apt-get install -y flex bison autoconf sqlite3 libsqlite3-dev libzstd-dev libreadline6-dev libsdl2-dev zlib1g-dev
+apt-get install -y lld bison flex libffi-dev libfl-dev pkg-config zlib1g-dev graphviz
 
 # Install yosys
 cd /tmp
-curl -L -o /tmp/yosys.tar.gz https://github.com/YosysHQ/yosys/releases/download/v0.57/yosys.tar.gz
+curl -L -o /tmp/yosys.tar.gz https://github.com/YosysHQ/yosys/releases/download/v0.60/yosys.tar.gz
 mkdir /tmp/yosys
 cd /tmp/yosys
 tar xzf ../yosys.tar.gz
