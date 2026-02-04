@@ -71,6 +71,10 @@ RUN bash /tmp/install-verilator.sh
 
 RUN apt-get install -y iverilog
 
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+COPY install-sv2v.sh /tmp/install-sv2v.sh
+RUN bash /tmp/install-sv2v.sh
 
 # Some cleanup for space
 RUN rm -rf /var/lib/apt/lists/*
@@ -84,3 +88,14 @@ RUN mkdir -p /code/rtl /code/verif /code/docs /app /code/mcp-servers /code/works
 
 # Create mountpoints in workspace
 RUN mkdir -p /code/workspace/cache /code/workspace/build /code/workspace/repo /code/workspace/tech
+RUN mkdir -p /code/workspace/cache/venv
+
+ENV PATH="/root/.local/bin:${PATH}"
+ENV UV_PROJECT_ENVIRONMENT=/code/workspace/cache/venv/
+ENV UV_PROJECT=/code/hagent/
+ENV UV_LINK_MODE=copy
+
+# To avoid the need of specifying it every time
+ENV HAGENT_CACHE_DIR=/code/workspace/cache
+
+RUN --mount=type=bind,from=hagent,target=/code/hagent cd /code/hagent && uv sync

@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.12
+FROM mascucsc/hagent-builder:2026.02
 
 ENV NOOP_HOME=/code/workspace/repo
 ENV NEMU_HOME=/code/workspace/NEMU
@@ -36,6 +36,9 @@ RUN patch -p1 < xiangshan.patch
 ENV PATH="/usr/local/bin:${PATH}"
 ENV HAGENT_REPO_DIR=/code/workspace/repo
 ENV HAGENT_BUILD_DIR=/code/workspace/build
+
+RUN apt-get update && \
+    apt-get install -y libsqlite3-dev libzstd-dev
 
 # Run the updated make commands
 RUN make BUILD_DIR=/code/workspace/build/build_opt CONFIG=MinimalConfig EMU_THREADS=2 EMU_TRACE=1 emu

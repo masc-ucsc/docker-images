@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.12
+FROM mascucsc/hagent-builder:2026.02
 
 #USER user
 WORKDIR /code/workspace

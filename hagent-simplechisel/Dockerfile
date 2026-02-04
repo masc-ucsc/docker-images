@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.12
+FROM mascucsc/hagent-builder:2026.02
 
 # Switch to user early
 #USER user
@@ -30,4 +30,4 @@ RUN export PATH="/usr/local/bin:/root/.local/share/coursier/bin:${PATH}" && sbt 
 RUN --mount=type=bind,from=tech,target=/code/workspace/tech \
     --mount=type=bind,from=hagent,target=/code/hagent \
   cd /code/workspace/build && \
-  /code/hagent/scripts/synth.py --top PipelinedCPU --netlist build_pipelined_d/netlist.v -F build_pipelined_d/filelist.f
+  uv run python /code/hagent/scripts/synth.py --top PipelinedCPU --tag reference -- -F build_pipelined_d/filelist.f

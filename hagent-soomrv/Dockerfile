@@ -1,4 +1,4 @@
-FROM mascucsc/hagent-builder:2025.12
+FROM mascucsc/hagent-builder:2026.02
 
 # Install the packages that SoomRV requires but hagent-builder base image does not have.
 RUN apt-get update && apt-get install -y \

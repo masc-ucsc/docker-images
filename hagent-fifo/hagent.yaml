@@ -26,4 +26,17 @@ profiles:
               --out   "${HAGENT_BUILD_DIR}"
           '
         cwd: /code/hagent
-
+      - name: elab
+        description: "Elaborate Sync_FIFO"
+        command: >
+          /code/hagent/scripts/synth.py --run-elab \
+                {{tag}} \
+                --top Sync_FIFO \
+                --dir ${HAGENT_BUILD_DIR} \
+                -- ${HAGENT_REPO_DIR}/src/*.sv
+        cwd: /code/hagent
+        options:
+          - name: tag
+            description: "Tag for elaboration"
+            format: "--tag {value}"
+            default: "--tag reference"

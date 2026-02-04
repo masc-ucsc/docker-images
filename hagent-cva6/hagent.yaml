@@ -41,15 +41,45 @@ profiles:
       - name: synth_asic
         description: "ASIC Synthesis for CVA6 core"
         command: >
-          /code/hagent/scripts/synth.py --sta \
-                --tech-dir /code/workspace/tech \
-                --netlist ${HAGENT_BUILD_DIR}/netlist.v \
+          /code/hagent/scripts/synth.py --run-sta --run-synth \
+                {{tag}} \
+                --top cva6 {{top_synth}} \
                 --top cva6 \
-                --ignore-unknown-modules \
+                --dir $HAGENT_BUILD_DIR \
+                -- --ignore-unknown-modules \
                 --allow-use-before-declare \
                 core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv \
                 -f ./core/Flist.cva6
         cwd: $HAGENT_REPO_DIR
+        options:
+          - name: top_synth
+            description: "Optional top synthesis module for faster synthesis that avoids top elaboration"
+            format: "--top-synthesis {value}"
+            default: ""
+          - name: tag
+            description: "Tag for elaboration"
+            format: "--tag {value}"
+            default: "--tag reference"
+      - name: elab
+        description: "Elaborate CVA6 core"
+        command: >
+          /code/hagent/scripts/synth.py --run-elab \
+                {{tag}} \
+                --top cva6 {{top_synth}} \
+                -- --ignore-unknown-modules \
+                --allow-use-before-declare \
+                core/include/cv64a6_imafdc_sv39_wb_config_pkg.sv \
+                -f ./core/Flist.cva6
+        cwd: $HAGENT_REPO_DIR
+        options:
+          - name: top_synth
+            description: "Optional top synthesis module for faster synthesis that avoids top elaboration"
+            format: "--top-synthesis {value}"
+            default: ""
+          - name: tag
+            description: "Tag for elaboration"
+            format: "--tag {value}"
+            default: "--tag reference"
 
   # --------------------------------------------------------------------------
   # NEW: Formal FPV pipeline for CVA6 load_store_unit using cli_formal

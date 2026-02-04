@@ -2,6 +2,15 @@
 #/bin/bash
 
 TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
+if [ -z "${HAGENT_ROOT}" ]; then
+  HAGENT_ROOT="./tmp/hagent"
+  if [ -d "${HAGENT_ROOT}/.git" ]; then
+    git -C "${HAGENT_ROOT}" pull --ff-only
+  else
+    mkdir -p "./tmp"
+    git clone https://github.com/masc-ucsc/hagent "${HAGENT_ROOT}"
+  fi
+fi
 
 # docker system prune
 #
@@ -14,15 +23,16 @@ TAG_DATE=${TAG_DATE:-$(date +'%Y.%m')}
 
 #docker build -f archlinux-masc/Dockerfile -t mascucsc/archlinux-masc:${TAG_DATE} ./archlinux-masc 2>&1 | tee archlinux.log
 #docker build -f alpine-masc/Dockerfile    -t mascucsc/alpine-masc:${TAG_DATE}    ./alpine-masc    2>&1 | tee alpine.log
-#docker build -f hagent-builder/Dockerfile -t mascucsc/hagent-builder:${TAG_DATE} ./hagent-builder 2>&1 | tee hagent.log
-docker build -f hagent-soomrv/Dockerfile -t mascucsc/hagent-soomrv:${TAG_DATE} ./hagent-soomrv 2>&1 | tee soomrv.log
-docker build -f hagent-fifo/Dockerfile -t mascucsc/hagent-fifo:${TAG_DATE} ./hagent-fifo 2>&1 | tee hagent.log
-docker build -f hagent-cva6/Dockerfile -t mascucsc/hagent-cva6:${TAG_DATE} ./hagent-cva6 2>&1 | tee cva6.log
-docker build -f hagent-xiangshan/Dockerfile -t mascucsc/hagent-xiangshan:${TAG_DATE} ./hagent-xiangshan 2>&1 | tee xiangshan.log
+
+docker build -f hagent-builder/Dockerfile --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-builder:${TAG_DATE} ./hagent-builder 2>&1 | tee hagent.log
+docker build -f hagent-soomrv/Dockerfile --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-soomrv:${TAG_DATE} ./hagent-soomrv 2>&1 | tee soomrv.log
+docker build -f hagent-fifo/Dockerfile --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-fifo:${TAG_DATE} ./hagent-fifo 2>&1 | tee hagent.log
+docker build -f hagent-cva6/Dockerfile --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-cva6:${TAG_DATE} ./hagent-cva6 2>&1 | tee cva6.log
+docker build -f hagent-xiangshan/Dockerfile --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-xiangshan:${TAG_DATE} ./hagent-xiangshan 2>&1 | tee xiangshan.log
 
 docker build -f hagent-simplechisel/Dockerfile \
   --build-context tech=/mada/software/techfiles/sky130_fd_sc \
-  --build-context hagent=../hagent -t mascucsc/hagent-simplechisel:${TAG_DATE} \
+  --build-context hagent=${HAGENT_ROOT} -t mascucsc/hagent-simplechisel:${TAG_DATE} \
   ./hagent-simplechisel 2>&1 | tee simplechisel.log
 
 #######################################
